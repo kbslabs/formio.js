@@ -13,12 +13,15 @@
     "full.js"
   ],
   "scripts": {
-    "prepublish": "gulp build",
     "build": "esdoc;gulp build",
     "lint": "eslint src",
     "serve": "jekyll serve --config _config.yml,_config.dev.yml",
     "test": "./node_modules/karma/bin/karma start --verbose --single-run",
-    "test:watch": "./node_modules/karma/bin/karma start --no-single-run --auto-watch"
+    "test:watch": "./node_modules/karma/bin/karma start --no-single-run --auto-watch",
+    "deploy": "npm version patch --message \"Deployment version %s [skip ci]\" && npm publish",
+    "preversion": "yarn && yarn run test && yarn run lint",
+    "version": "yarn run build",
+    "postversion": "git push && git push --tags"
   },
   "repository": {
     "type": "git",
