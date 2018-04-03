@@ -19,8 +19,8 @@
     "test": "./node_modules/karma/bin/karma start --verbose --single-run",
     "test:watch": "./node_modules/karma/bin/karma start --no-single-run --auto-watch",
     "deploy": "npm version patch --message \"Deployment version %s [skip ci]\" && npm publish",
-    "preversion": "yarn && yarn run test && yarn run lint",
-    "version": "yarn run build",
+    "preversion": "npm ci && npm run test && npm run lint",
+    "version": "npm run build",
     "postversion": "git push && git push --tags"
   },
   "repository": {
@@ -59,7 +59,7 @@
   "homepage": "https://github.com/formio/formio.js#readme",
   "dependencies": {
     "browser-cookies": "^1.2.0",
-    "choices.js": "3.0.3",
+    "choices.js": "^3.0.3",
     "dialog-polyfill": "^0.4.9",
     "eventemitter2": "^5.0.1",
     "flatpickr": "^4.4.3",
