@@ -29,10 +29,10 @@ jobs:
       - run:
           name: Download Chrome
           command: curl -L -o google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-      -run:
+      - run:
           name: Depackage Chrome
           command: sudo dpkg -i google-chrome.deb
-      -run: 
+      - run: 
           name: Config Chrome
           run: sudo sed -i 's|HERE/chrome\"|HERE/chrome\" --disable-setuid-sandbox|g' /opt/google/chrome/google-chrome
       - run:  
