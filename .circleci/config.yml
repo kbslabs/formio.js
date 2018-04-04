@@ -26,6 +26,15 @@ jobs:
       - run:
           name: Allow access to private npm.
           command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
+      - run:
+          name: Download Chrome
+          command: curl -L -o google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+      -run:
+          name: Depackage Chrome
+          command: sudo dpkg -i google-chrome.deb
+      -run: 
+          name: Config Chrome
+          run: sudo sed -i 's|HERE/chrome\"|HERE/chrome\" --disable-setuid-sandbox|g' /opt/google/chrome/google-chrome
       - run:  
           name: Configure git to commit and push the tag.
           command: git config --global user.email $GIT_USER_EMAIL && git config --global user.name $GIT_USER_NAME && git branch -u origin/$CIRCLE_BRANCH
