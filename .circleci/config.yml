@@ -26,6 +26,14 @@ jobs:
       - run:
           name: Allow access to private npm.
           command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
+      - run:
+          name: Install Chromedriver latest version
+          command: |
+            wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+            echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' | sudo tee /etc/apt/sources.list.d/google-chrome.list
+            sudo apt-get update
+            sudo apt-get install google-chrome-stable
+
       - run:  
           name: Configure git to commit and push the tag.
           command: git config --global user.email $GIT_USER_EMAIL && git config --global user.name $GIT_USER_NAME && git branch -u origin/$CIRCLE_BRANCH
