@@ -165,6 +165,8 @@ export class RadioComponent extends BaseComponent {
       }
       else if (!isNaN(parseInt(inputValue, 10)) && isFinite(inputValue)) {
         inputValue = parseInt(inputValue, 10);
+        this.inputs[index].checked = (inputValue === parseInt(value, 10));
+        return;
       }
 
       this.inputs[index].checked = (inputValue === value);
