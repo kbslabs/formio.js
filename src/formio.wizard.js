@@ -236,6 +236,7 @@ export default class FormioWizard extends FormioForm {
     this.options.buttonSettings = _.defaults(this.options.buttonSettings, {
       showPrevious: true,
       showNext: true,
+      showSubmit: true,
       showCancel: true
     });
 
@@ -250,7 +251,7 @@ export default class FormioWizard extends FormioForm {
       return this.options.buttonSettings.showCancel;
     }
     if (name === 'submit') {
-      return (nextPage === null) || (this.page === (this.pages.length - 1));
+      return (nextPage === null) || (this.page === (this.pages.length - 1)) && this.options.buttonSettings.showSubmit;
     }
     return true;
   }
