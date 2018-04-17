@@ -776,7 +776,7 @@ export default class FormioForm extends FormioComponents {
    * Build the form.
    */
   build() {
-    this.on('submitButton', () => this.submit(), true);
+    this.on('submitButton', () => this.submit().catch(e => {}), true);
     this.addComponents();
     this.on('requestUrl', (args) => (this.submitUrl(args.url,args.headers)), true);
   }
