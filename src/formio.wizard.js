@@ -310,8 +310,14 @@ export default class FormioWizard extends FormioForm {
 
       if (clickable) {
         this.addEventListener(pageButton, 'click', (event) => {
-          event.preventDefault();
-          this.setPage(i);
+          // Validate the form builed, before go to the next page
+          if (this.checkValidity(this.submission.data, true)) {
+            event.preventDefault();
+            this.setPage(i);
+          }
+          else {
+            this.showErrors(null, true);
+          }
         });
       }
 
