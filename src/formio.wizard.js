@@ -314,8 +314,7 @@ export default class FormioWizard extends FormioForm {
           if (this.checkValidity(this.submission.data, true)) {
             event.preventDefault();
             this.setPage(i);
-          }
-          else {
+          } else {
             this.showErrors(null, true);
           }
         });
