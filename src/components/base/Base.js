@@ -240,7 +240,7 @@ export class BaseComponent {
     this.eventListeners.push({
       type: type,
       listener: cb,
-      internal: internal
+      internal
     });
     return this.events.on(type, cb);
   }
@@ -346,6 +346,8 @@ export class BaseComponent {
 
       // Restore the value.
       this.restoreValue();
+
+      this.autofocus();
     }
   }
 
@@ -529,8 +531,8 @@ export class BaseComponent {
     else if (this.component.customDefaultValue) {
       if (typeof this.component.customDefaultValue === 'string') {
         try {
-          defaultValue = (new Function('component', 'row', 'data',
-            `var value = ''; ${this.component.customDefaultValue}; return value;`))(this, this.data, this.data);
+          defaultValue = (new Function('component', 'row', 'data', '_',
+            `var value = ''; ${this.component.customDefaultValue}; return value;`))(this, this.data, this.data, _);
         }
         catch (e) {
           defaultValue = null;
@@ -564,7 +566,7 @@ export class BaseComponent {
     }
 
     // Clone so that it creates a new instance.
-    return _.cloneDeep(defaultValue);
+    return _.clone(defaultValue);
   }
 
   /**
@@ -603,6 +605,9 @@ export class BaseComponent {
     this.buildRows();
     this.checkConditions(this.root ? this.root.data : this.data);
     this.restoreValue();
+    if (this.root) {
+      this.root.onChange();
+    }
   }
 
   /**
@@ -612,6 +617,10 @@ export class BaseComponent {
   removeValue(index) {
     this.splice(index);
     this.buildRows();
+    this.restoreValue();
+    if (this.root) {
+      this.root.onChange();
+    }
   }
 
   /**
@@ -681,7 +690,7 @@ export class BaseComponent {
    * @returns {HTMLElement} - The "Add New" button html element.
    */
   addButton(justIcon) {
-    const addButton = this.ce('a', {
+    const addButton = this.ce('button', {
       class: 'btn btn-primary'
     });
     this.addEventListener(addButton, 'click', (event) => {
@@ -740,8 +749,7 @@ export class BaseComponent {
   removeButton(index) {
     const removeButton = this.ce('button', {
       type: 'button',
-      class: 'btn btn-default btn-secondary',
-      tabindex: '-1'
+      class: 'btn btn-default btn-secondary'
     });
 
     this.addEventListener(removeButton, 'click', (event) => {
@@ -1399,10 +1407,15 @@ export class BaseComponent {
   /**
    * Show or hide the root element of this component.
    *
+   * @param element
    * @param show
    */
-  showElement(show) {
-    const element = this.getElement();
+  showElement(element, show) {
+    if (typeof element === 'boolean') {
+      show = element;
+      element = this.getElement();
+    }
+
     if (element) {
       if (show) {
         element.removeAttribute('hidden');
@@ -1420,7 +1433,7 @@ export class BaseComponent {
 
   clearOnHide(show) {
     // clearOnHide defaults to true for old forms (without the value set) so only trigger if the value is false.
-    if (this.component.clearOnHide !== false) {
+    if (this.component.clearOnHide !== false && !this.options.readOnly) {
       if (!show) {
         this.deleteValue();
       }
@@ -1567,7 +1580,7 @@ export class BaseComponent {
     if (!this.hasValue) {
       this.dataValue = this.emptyValue;
     }
-    return _.get(this.data, this.component.key, this.emptyValue);
+    return _.get(this.data, this.component.key);
   }
 
   /**
@@ -1603,6 +1616,7 @@ export class BaseComponent {
    * Deletes the value of the component.
    */
   deleteValue() {
+    this.setValue(null);
     _.unset(this.data, this.component.key);
   }
 
@@ -1648,6 +1662,12 @@ export class BaseComponent {
    * @return {boolean}
    */
   hasChanged(before, after) {
+    if (
+      ((before === undefined) || (before === null)) &&
+      ((after === undefined) || (after === null))
+    ) {
+      return false;
+    }
     return !_.isEqual(before, after);
   }
 
@@ -1692,7 +1712,7 @@ export class BaseComponent {
    * Restore the value of a control.
    */
   restoreValue() {
-    if (this.hasValue) {
+    if (this.hasValue && !this.isEmpty(this.dataValue)) {
       this.setValue(this.dataValue, {
         noUpdateEvent: true
       });
@@ -1832,7 +1852,7 @@ export class BaseComponent {
   }
 
   isEmpty(value) {
-    return value == null || value.length === 0;
+    return value == null || value.length === 0 || _.isEqual(value, this.emptyValue);
   }
 
   /**
@@ -2102,16 +2122,25 @@ export class BaseComponent {
       attributes.tabindex = this.component.tabindex;
     }
 
-    if (this.component.autofocus) {
-      attributes.autofocus = this.component.autofocus;
-    }
-
     return {
       type: 'input',
       component: this.component,
       changeEvent: 'change',
       attr: attributes
     };
+  }
+
+  autofocus() {
+    if (this.component.autofocus) {
+      this.on('render', () => this.focus(), true);
+    }
+  }
+
+  focus() {
+    const input = this.inputs[0];
+    if (input) {
+      input.focus();
+    }
   }
 }
 
