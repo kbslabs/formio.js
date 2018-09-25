@@ -1,70 +1,27 @@
 [
   {
-    "name": "FormioComponents#createComponent",
-    "filePath": "src/components/Components.js",
-    "lines": [
-      {
-        "lineNumber": 99,
-        "line": "  /**"
-      },
-      {
-        "lineNumber": 100,
-        "line": "   * Create a new component and add it to the components array."
-      },
-      {
-        "lineNumber": 101,
-        "line": "   *"
-      },
-      {
-        "lineNumber": 102,
-        "line": "   * @param component"
-      },
-      {
-        "lineNumber": 103,
-        "line": "   * @param data"
-      },
-      {
-        "lineNumber": 104,
-        "line": "   */"
-      },
-      {
-        "lineNumber": 105,
-        "line": "  createComponent(component, options, data) {"
-      }
-    ],
-    "codeParams": [
-      "component",
-      "options",
-      "data"
-    ],
-    "docParams": [
-      "component",
-      "data"
-    ]
-  },
-  {
     "name": "BaseComponent#createTooltip",
     "filePath": "src/components/base/Base.js",
     "lines": [
       {
         "lineNumber": 938,
-        "line": "  /**"
+        "line": "  /**\r"
       },
       {
         "lineNumber": 939,
-        "line": "   * Create the HTML element for the tooltip of this component."
+        "line": "   * Create the HTML element for the tooltip of this component.\r"
       },
       {
         "lineNumber": 940,
-        "line": "   * @param {HTMLElement} container - The containing element that will contain this tooltip."
+        "line": "   * @param {HTMLElement} container - The containing element that will contain this tooltip.\r"
       },
       {
         "lineNumber": 941,
-        "line": "   */"
+        "line": "   */\r"
       },
       {
         "lineNumber": 942,
-        "line": "  createTooltip(container, component, classes) {"
+        "line": "  createTooltip(container, component, classes) {\r"
       }
     ],
     "codeParams": [
@@ -82,27 +39,27 @@
     "lines": [
       {
         "lineNumber": 1172,
-        "line": "  /**"
+        "line": "  /**\r"
       },
       {
         "lineNumber": 1173,
-        "line": "   * Append different types of children."
+        "line": "   * Append different types of children.\r"
       },
       {
         "lineNumber": 1174,
-        "line": "   *"
+        "line": "   *\r"
       },
       {
         "lineNumber": 1175,
-        "line": "   * @param child"
+        "line": "   * @param child\r"
       },
       {
         "lineNumber": 1176,
-        "line": "   */"
+        "line": "   */\r"
       },
       {
         "lineNumber": 1177,
-        "line": "  appendChild(element, child) {"
+        "line": "  appendChild(element, child) {\r"
       }
     ],
     "codeParams": [
@@ -119,47 +76,47 @@
     "lines": [
       {
         "lineNumber": 1191,
-        "line": "  /**"
+        "line": "  /**\r"
       },
       {
         "lineNumber": 1192,
-        "line": "   * Alias for document.createElement."
+        "line": "   * Alias for document.createElement.\r"
       },
       {
         "lineNumber": 1193,
-        "line": "   *"
+        "line": "   *\r"
       },
       {
         "lineNumber": 1194,
-        "line": "   * @param {string} type - The type of element to create"
+        "line": "   * @param {string} type - The type of element to create\r"
       },
       {
         "lineNumber": 1195,
-        "line": "   * @param {Object} attr - The element attributes to add to the created element."
+        "line": "   * @param {Object} attr - The element attributes to add to the created element.\r"
       },
       {
         "lineNumber": 1196,
-        "line": "   * @param {Various} children - Child elements. Can be a DOM Element, string or array of both."
+        "line": "   * @param {Various} children - Child elements. Can be a DOM Element, string or array of both.\r"
       },
       {
         "lineNumber": 1197,
-        "line": "   * @param {Object} events"
+        "line": "   * @param {Object} events\r"
       },
       {
         "lineNumber": 1198,
-        "line": "   *"
+        "line": "   *\r"
       },
       {
         "lineNumber": 1199,
-        "line": "   * @return {HTMLElement} - The created element."
+        "line": "   * @return {HTMLElement} - The created element.\r"
       },
       {
         "lineNumber": 1200,
-        "line": "   */"
+        "line": "   */\r"
       },
       {
         "lineNumber": 1201,
-        "line": "  ce(type, attr, children = null) {"
+        "line": "  ce(type, attr, children = null) {\r"
       }
     ],
     "codeParams": [
@@ -180,35 +137,35 @@
     "lines": [
       {
         "lineNumber": 1528,
-        "line": "  /**"
+        "line": "  /**\r"
       },
       {
         "lineNumber": 1529,
-        "line": "   * Add a new input to this comonent."
+        "line": "   * Add a new input to this comonent.\r"
       },
       {
         "lineNumber": 1530,
-        "line": "   *"
+        "line": "   *\r"
       },
       {
         "lineNumber": 1531,
-        "line": "   * @param input"
+        "line": "   * @param input\r"
       },
       {
         "lineNumber": 1532,
-        "line": "   * @param container"
+        "line": "   * @param container\r"
       },
       {
         "lineNumber": 1533,
-        "line": "   * @param noSet"
+        "line": "   * @param noSet\r"
       },
       {
         "lineNumber": 1534,
-        "line": "   */"
+        "line": "   */\r"
       },
       {
         "lineNumber": 1535,
-        "line": "  addInput(input, container) {"
+        "line": "  addInput(input, container) {\r"
       }
     ],
     "codeParams": [
@@ -227,35 +184,35 @@
     "lines": [
       {
         "lineNumber": 1729,
-        "line": "  /**"
+        "line": "  /**\r"
       },
       {
         "lineNumber": 1730,
-        "line": "   * Perform a calculated value operation."
+        "line": "   * Perform a calculated value operation.\r"
       },
       {
         "lineNumber": 1731,
-        "line": "   *"
+        "line": "   *\r"
       },
       {
         "lineNumber": 1732,
-        "line": "   * @param data - The global data object."
+        "line": "   * @param data - The global data object.\r"
       },
       {
         "lineNumber": 1733,
-        "line": "   *"
+        "line": "   *\r"
       },
       {
         "lineNumber": 1734,
-        "line": "   * @return {boolean} - If the value changed during calculation."
+        "line": "   * @return {boolean} - If the value changed during calculation.\r"
       },
       {
         "lineNumber": 1735,
-        "line": "   */"
+        "line": "   */\r"
       },
       {
         "lineNumber": 1736,
-        "line": "  calculateValue(data, flags) {"
+        "line": "  calculateValue(data, flags) {\r"
       }
     ],
     "codeParams": [
@@ -267,36 +224,79 @@
     ]
   },
   {
+    "name": "FormioComponents#createComponent",
+    "filePath": "src/components/Components.js",
+    "lines": [
+      {
+        "lineNumber": 99,
+        "line": "  /**\r"
+      },
+      {
+        "lineNumber": 100,
+        "line": "   * Create a new component and add it to the components array.\r"
+      },
+      {
+        "lineNumber": 101,
+        "line": "   *\r"
+      },
+      {
+        "lineNumber": 102,
+        "line": "   * @param component\r"
+      },
+      {
+        "lineNumber": 103,
+        "line": "   * @param data\r"
+      },
+      {
+        "lineNumber": 104,
+        "line": "   */\r"
+      },
+      {
+        "lineNumber": 105,
+        "line": "  createComponent(component, options, data) {\r"
+      }
+    ],
+    "codeParams": [
+      "component",
+      "options",
+      "data"
+    ],
+    "docParams": [
+      "component",
+      "data"
+    ]
+  },
+  {
     "name": "SelectComponent#addOption",
     "filePath": "src/components/select/Select.js",
     "lines": [
       {
-        "lineNumber": 123,
-        "line": "  /**"
+        "lineNumber": 85,
+        "line": "  /**\r"
       },
       {
-        "lineNumber": 124,
-        "line": "   * Adds an option to the select dropdown."
+        "lineNumber": 86,
+        "line": "   * Adds an option to the select dropdown.\r"
       },
       {
-        "lineNumber": 125,
-        "line": "   *"
+        "lineNumber": 87,
+        "line": "   *\r"
       },
       {
-        "lineNumber": 126,
-        "line": "   * @param value"
+        "lineNumber": 88,
+        "line": "   * @param value\r"
       },
       {
-        "lineNumber": 127,
-        "line": "   * @param label"
+        "lineNumber": 89,
+        "line": "   * @param label\r"
       },
       {
-        "lineNumber": 128,
-        "line": "   */"
+        "lineNumber": 90,
+        "line": "   */\r"
       },
       {
-        "lineNumber": 129,
-        "line": "  addOption(value, label, attr) {"
+        "lineNumber": 91,
+        "line": "  addOption(value, label, attr) {\r"
       }
     ],
     "codeParams": [
@@ -315,31 +315,31 @@
     "lines": [
       {
         "lineNumber": 862,
-        "line": "  /**"
+        "line": "  /**\r"
       },
       {
         "lineNumber": 863,
-        "line": "   * Trigger the change event for this form."
+        "line": "   * Trigger the change event for this form.\r"
       },
       {
         "lineNumber": 864,
-        "line": "   *"
+        "line": "   *\r"
       },
       {
         "lineNumber": 865,
-        "line": "   * @param changed"
+        "line": "   * @param changed\r"
       },
       {
         "lineNumber": 866,
-        "line": "   * @param flags"
+        "line": "   * @param flags\r"
       },
       {
         "lineNumber": 867,
-        "line": "   */"
+        "line": "   */\r"
       },
       {
         "lineNumber": 868,
-        "line": "  onChange(flags, changed) {"
+        "line": "  onChange(flags, changed) {\r"
       }
     ],
     "codeParams": [
@@ -357,83 +357,83 @@
     "lines": [
       {
         "lineNumber": 973,
-        "line": "  /**"
+        "line": "  /**\r"
       },
       {
         "lineNumber": 974,
-        "line": "   * Submits the form."
+        "line": "   * Submits the form.\r"
       },
       {
         "lineNumber": 975,
-        "line": "   *"
+        "line": "   *\r"
       },
       {
         "lineNumber": 976,
-        "line": "   * @example"
+        "line": "   * @example\r"
       },
       {
         "lineNumber": 977,
-        "line": "   * let form = new FormioForm(document.getElementById('formio'));"
+        "line": "   * let form = new FormioForm(document.getElementById('formio'));\r"
       },
       {
         "lineNumber": 978,
-        "line": "   * form.src = 'https://examples.form.io/example';"
+        "line": "   * form.src = 'https://examples.form.io/example';\r"
       },
       {
         "lineNumber": 979,
-        "line": "   * form.submission = {data: {"
+        "line": "   * form.submission = {data: {\r"
       },
       {
         "lineNumber": 980,
-        "line": "   *   firstName: 'Joe',"
+        "line": "   *   firstName: 'Joe',\r"
       },
       {
         "lineNumber": 981,
-        "line": "   *   lastName: 'Smith',"
+        "line": "   *   lastName: 'Smith',\r"
       },
       {
         "lineNumber": 982,
-        "line": "   *   email: 'joe@example.com'"
+        "line": "   *   email: 'joe@example.com'\r"
       },
       {
         "lineNumber": 983,
-        "line": "   * }};"
+        "line": "   * }};\r"
       },
       {
         "lineNumber": 984,
-        "line": "   * form.submit().then((submission) => {"
+        "line": "   * form.submit().then((submission) => {\r"
       },
       {
         "lineNumber": 985,
-        "line": "   *   console.log(submission);"
+        "line": "   *   console.log(submission);\r"
       },
       {
         "lineNumber": 986,
-        "line": "   * });"
+        "line": "   * });\r"
       },
       {
         "lineNumber": 987,
-        "line": "   *"
+        "line": "   *\r"
       },
       {
         "lineNumber": 988,
-        "line": "   * @param {boolean} before - If this submission occured from the before handlers."
+        "line": "   * @param {boolean} before - If this submission occured from the before handlers.\r"
       },
       {
         "lineNumber": 989,
-        "line": "   *"
+        "line": "   *\r"
       },
       {
         "lineNumber": 990,
-        "line": "   * @returns {Promise} - A promise when the form is done submitting."
+        "line": "   * @returns {Promise} - A promise when the form is done submitting.\r"
       },
       {
         "lineNumber": 991,
-        "line": "   */"
+        "line": "   */\r"
       },
       {
         "lineNumber": 992,
-        "line": "  submit(before, options) {"
+        "line": "  submit(before, options) {\r"
       }
     ],
     "codeParams": [
