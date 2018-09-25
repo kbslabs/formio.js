@@ -7,7 +7,7 @@ export class ButtonComponent extends BaseComponent {
   elementInfo() {
     const info = super.elementInfo();
     info.type = 'button';
-    info.attr.type = (this.component.action === 'submit') ? 'submit' : 'button';
+    info.attr.type = (['submit', 'saveState'].includes(this.component.action)) ? 'submit' : 'button';
     this.component.theme = this.component.theme || 'default';
     info.attr.class = `btn btn-${this.component.theme}`;
     if (this.component.block) {
@@ -69,11 +69,26 @@ export class ButtonComponent extends BaseComponent {
     this.addShortcut(this.button);
     this.hook('input', this.button, this.element);
 
+    if (this.component.leftIcon) {
+      this.button.appendChild(this.ce('span', {
+        class: this.component.leftIcon
+      }));
+      this.button.appendChild(this.text(' '));
+    }
+
     if (this.component.label) {
       this.labelElement = this.text(this.addShortcutToLabel());
       this.button.appendChild(this.labelElement);
       this.createTooltip(this.button, null, this.iconClass('question-sign'));
     }
+
+    if (this.component.rightIcon) {
+      this.button.appendChild(this.text(' '));
+      this.button.appendChild(this.ce('span', {
+        class: this.component.rightIcon
+      }));
+    }
+
     if (this.component.action === 'submit') {
       const errorContainer = this.ce('div', {
         class: 'has-error'
@@ -81,7 +96,7 @@ export class ButtonComponent extends BaseComponent {
       const error = this.ce('span', {
         class: 'help-block'
       });
-      error.appendChild(this.text('Please correct all errors before submitting.'));
+      error.appendChild(this.text(this.errorMessage('error')));
       errorContainer.appendChild(error);
 
       this.on('submitButton', () => {
@@ -131,7 +146,9 @@ export class ButtonComponent extends BaseComponent {
         case 'submit':
           event.preventDefault();
           event.stopPropagation();
-          this.emit('submitButton');
+          this.emit('submitButton', {
+            state: this.component.state || 'submitted'
+          });
           break;
         case 'event':
           this.emit(this.component.event, this.data);
@@ -178,6 +195,9 @@ export class ButtonComponent extends BaseComponent {
         case 'reset':
           this.emit('resetForm');
           break;
+        case 'delete':
+          this.emit('deleteSubmission');
+          break;
         case 'oauth':
           if (this.root === this) {
             console.warn('You must add the OAuth button to a form for it to function properly');
@@ -207,15 +227,23 @@ export class ButtonComponent extends BaseComponent {
 
     function getUrlParameter(name) {
       name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
-      var regex = new RegExp(`[\\?&]${name}=([^&#]*)`);
-      var results = regex.exec(location.search);
-      return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+      const regex = new RegExp(`[\\?&]${name}=([^&#]*)`);
+      const results = regex.exec(location.search);
+      if (!results) {
+        return results;
+      }
+      return decodeURIComponent(results[1].replace(/\+/g, ' '));
     }
 
     // If this is an OpenID Provider initiated login, perform the click event immediately
-    if (this.component.action === 'oauth' && this.component.oauth.authURI.indexOf(getUrlParameter('iss')) === 0) {
-      this.openOauth();
+    if ((this.component.action === 'oauth') && this.component.oauth && this.component.oauth.authURI) {
+      const iss = getUrlParameter('iss');
+      if (iss && (this.component.oauth.authURI.indexOf(iss) === 0)) {
+        this.openOauth();
+      }
     }
+
+    this.autofocus();
   }
 
   openOauth() {
@@ -296,6 +324,10 @@ export class ButtonComponent extends BaseComponent {
   destroy() {
     super.destroy.apply(this, Array.prototype.slice.apply(arguments));
     this.removeShortcut(this.element);
+  }
+
+  focus() {
+    this.button.focus();
   }
 }
 

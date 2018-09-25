@@ -12,6 +12,9 @@ export class DayComponent extends BaseComponent {
     this.dayFirst = this.component.useLocaleSettings
       ? dateFormatInfo.dayFirst
       : this.component.dayFirst;
+    this.hideDay = _.get(this.component, 'fields.day.hide', false);
+    this.hideMonth = _.get(this.component, 'fields.month.hide', false);
+    this.hideYear = _.get(this.component, 'fields.year.hide', false);
   }
 
   elementInfo() {
@@ -46,6 +49,10 @@ export class DayComponent extends BaseComponent {
 
   get emptyValue() {
     return '';
+  }
+
+  isEmpty(value) {
+    return super.isEmpty(value);
   }
 
   createDayInput(subinputAtTheBottom) {
@@ -157,7 +164,6 @@ export class DayComponent extends BaseComponent {
       step: '1',
       min: '1',
       placeholder: _.get(this.component, 'fields.year.placeholder', ''),
-      value: (new Date().getFullYear()),
       id
     });
 
@@ -197,16 +203,16 @@ export class DayComponent extends BaseComponent {
     const [dayColumn, monthColumn, yearColumn] = this.createInputs(subinputAtTheBottom);
 
     // Add the columns to the day select in the right order.
-    if (this.dayFirst && !_.get(this.component, 'fields.day.hide', false)) {
+    if (this.dayFirst && !this.hideDay) {
       inputGroup.appendChild(dayColumn);
     }
-    if (!_.get(this.component, 'fields.month.hide', false)) {
+    if (!this.hideMonth) {
       inputGroup.appendChild(monthColumn);
     }
-    if (!this.dayFirst && !_.get(this.component, 'fields.day.hide', false)) {
+    if (!this.dayFirst && !this.hideDay) {
       inputGroup.appendChild(dayColumn);
     }
-    if (!_.get(this.component, 'fields.year.hide', false)) {
+    if (!this.hideYear) {
       inputGroup.appendChild(yearColumn);
     }
 
@@ -342,5 +348,17 @@ export class DayComponent extends BaseComponent {
   getView() {
     const date = this.date;
     return date.isValid() ? date.format(this.format) : null;
+  }
+
+  focus() {
+    if (this.dayFirst && !this.hideDay || !this.dayFirst && this.hideMonth && !this.hideDay) {
+      this.dayInput.focus();
+    }
+    else if (this.dayFirst && this.hideDay && !this.hideMonth || !this.dayFirst && !this.hideMonth) {
+      this.monthInput.focus();
+    }
+    else if (this.hideDay && this.hideMonth && !this.hideYear) {
+      this.yearInput.focus();
+    }
   }
 }

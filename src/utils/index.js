@@ -110,6 +110,7 @@ const FormioUtils = {
       const subPath = () => {
         if (
           component.key &&
+          !['panel', 'table', 'well', 'columns', 'fieldset', 'tabs', 'form'].includes(component.type) &&
           (
             ['datagrid', 'container', 'editgrid'].includes(component.type) ||
             component.tree
@@ -704,7 +705,7 @@ const FormioUtils = {
     const formattedNumberString = (12345.6789).toLocaleString(lang);
     return {
       delimiter: formattedNumberString.match(/12(.*)345/)[1],
-      decimalSeparator: formattedNumberString.match(/345(.*)67/)[1]
+      decimalSeparator: formattedNumberString.match(/345(.*)6[78]/)[1]
     };
   },
   getNumberDecimalLimit(component) {
@@ -728,12 +729,17 @@ const FormioUtils = {
     lang,
   }) {
     // Get the prefix and suffix from the localized string.
-    const regex = `(.*)?100${decimalSeparator === '.' ? '\\.' : decimalSeparator}0{${decimalLimit}}(.*)?`;
+    let regex = '(.*)?100';
+    if (decimalLimit) {
+      regex += `${decimalSeparator === '.' ? '\\.' : decimalSeparator}0{${decimalLimit}}`;
+    }
+    regex += '(.*)?';
     const parts = (100).toLocaleString(lang, {
       style: 'currency',
       currency,
       useGrouping: true,
-      maximumFractionDigits: decimalLimit
+      maximumFractionDigits: decimalLimit,
+      minimumFractionDigits: decimalLimit
     }).replace('.', decimalSeparator).match(new RegExp(regex));
     return {
       prefix: parts[1] || '',
