@@ -1,5 +1,5 @@
 {
-  "name": "formiojs",
+  "name": "@kelsus/formiojs",
   "version": "3.15.6",
   "description": "Common js library for client side interaction with <form.io>",
   "main": "index.js",
