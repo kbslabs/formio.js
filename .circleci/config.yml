@@ -15,7 +15,7 @@ jobs:
       GIT_USER_NAME: CircleCI
     branches:
       only:
-        - /kelsus/publish
+        - kelsus/publish
     steps:
       # Setup enviroment on Circle CI. This enable the support for docker-compose.
       # - setup_remote_docker
