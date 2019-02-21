@@ -1,6 +1,6 @@
 {
   "name": "formiojs",
-  "version": "4.0.0",
+  "version": "3.15.6",
   "description": "Common js library for client side interaction with <form.io>",
   "main": "index.js",
   "files": [
@@ -25,7 +25,7 @@
     "serve": "jekyll serve --config _config.yml,_config.dev.yml",
     "test": "NODE_OPTIONS=\"--max-old-space-size=4096\" karma start --verbose --single-run",
     "test:watch": "NODE_OPTIONS=\"--max-old-space-size=4096\" karma start --no-single-run --auto-watch",
-    "deploy": "npm version major --message \"Deployment version %s [skip ci]\" && npm publish",
+    "deploy": "npm version patch --message \"Deployment version %s [skip ci]\" && npm publish",
     "preversion": "npm i && npm run test",
     "version": "npm run build",
     "postversion": "git push && git push --tags"
