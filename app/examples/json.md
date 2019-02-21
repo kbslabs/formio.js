@@ -1,10 +1,9 @@
 ---
-title: JSON Powered
+title: JSON Powered Forms
 layout: vtabs
 section: examples
 weight: 30
 ---
-### JSON Powered Forms
 All forms that are rendered within this framework are JSON powered forms.
 
 ```html
@@ -24,14 +23,45 @@ Formio.createForm(document.getElementById('formio'), {
       key: 'firstName',
       label: 'First Name',
       placeholder: 'Enter your first name.',
-      input: true
+      input: true,
+      validate: {
+        required: true
+      }
     },
     {
       type: 'textfield',
       key: 'lastName',
       label: 'Last Name',
       placeholder: 'Enter your last name',
-      input: true
+      input: true,
+      validate: {
+        required: true
+      }
+    },
+    {
+      type: 'email',
+      key: 'email',
+      label: 'Email',
+      placeholder: 'Enter your email',
+      input: true,
+      validateOn: 'blur'
+    },
+    {
+      type: 'phoneNumber',
+      key: 'phoneNumber',
+      label: 'Phone',
+      input: true,
+      allowMultipleMasks: true,
+      inputMasks: [
+        {
+          'label': 'US',
+          'mask': '(999) 999-9999'
+        },
+        {
+          'label': 'BY',
+          'mask': '+999 (99) 999-99-99'
+        }
+      ]
     },
     {
       type: 'select',
@@ -105,7 +135,10 @@ Formio.createForm(document.getElementById('formio'), {
       format: 'yyyy-MM-dd hh:mm a"', 
       input: true, 
       tooltip: 'Enter date the item is <strong>due</strong>', 
-      description: 'Enter <strong>Due Date</strong>'
+      description: 'Enter <strong>Due Date</strong>',
+      validate: {
+        required: true
+      }
     },
     {
       type: 'day',
@@ -136,6 +169,12 @@ Formio.createForm(document.getElementById('formio'), {
       action: 'submit',
       label: 'Submit',
       theme: 'primary'
+    },
+    {
+      type: 'button',
+      action: 'reset',
+      label: 'Reset Form',
+      theme: 'success'
     }
   ]
 });
@@ -144,7 +183,7 @@ Formio.createForm(document.getElementById('formio'), {
 </div>
 <div class="col col-sm-6">
 <h3>Result</h3>
-<div class="well">
+<div class="card card-body bg-light">
 <div id="formio"></div>
 <script type="text/javascript">
 Formio.createForm(document.getElementById('formio'), {
@@ -154,14 +193,45 @@ Formio.createForm(document.getElementById('formio'), {
       key: 'firstName',
       label: 'First Name',
       placeholder: 'Enter your first name.',
-      input: true
+      input: true,
+      validate: {
+        required: true
+      }
     },
     {
       type: 'textfield',
       key: 'lastName',
       label: 'Last Name',
       placeholder: 'Enter your last name',
-      input: true
+      input: true,
+      validate: {
+        required: true
+      }
+    },
+    {
+      type: 'email',
+      key: 'email',
+      label: 'Email',
+      placeholder: 'Enter your email',
+      input: true,
+      validateOn: 'blur'
+    },
+    {
+      type: 'phoneNumber',
+      key: 'phoneNumber',
+      label: 'Phone',
+      input: true,
+      allowMultipleMasks: true,
+      inputMasks: [
+        {
+          'label': 'US',
+          'mask': '(999) 999-9999'
+        },
+        {
+          'label': 'BY',
+          'mask': '+999 (99) 999-99-99'
+        }
+      ]
     },
     {
       type: 'select',
@@ -235,7 +305,10 @@ Formio.createForm(document.getElementById('formio'), {
       format: 'yyyy-MM-dd hh:mm a"', 
       input: true, 
       tooltip: 'Enter date the item is <strong>due</strong>', 
-      description: 'Enter <strong>Due Date</strong>'
+      description: 'Enter <strong>Due Date</strong>',
+      validate: {
+        required: true
+      }
     },
     {
       type: 'day',
@@ -266,7 +339,13 @@ Formio.createForm(document.getElementById('formio'), {
       action: 'submit',
       label: 'Submit',
       theme: 'primary'
-    }
+    },
+     {
+       type: 'button',
+       action: 'reset',
+       label: 'Reset Form',
+       theme: 'success'
+     }
   ]
 }).then(function(form) {
   form.on('change', function(changed) {

@@ -1,6 +1,8 @@
 import assert from 'power-assert';
-import { Harness } from '../harness';
-module.exports = {
+
+import Harness from '../harness';
+
+export default {
   title: 'Calculated Fields Test',
   form: {
     components: [
@@ -26,7 +28,7 @@ module.exports = {
         inputType: 'text',
         disabled: true,
         calculateValue: {
-          "+": [
+          '+': [
             {var: 'data.a'},
             {var: 'data.b'}
           ]
@@ -35,9 +37,9 @@ module.exports = {
     ]
   },
   tests: {
-    'Test calculated fields': (form, done) => {
+    'Test calculated fields'(form, done) {
       form.on('change', () => {
-        let value = form.getValue();
+        const value = form.getValue();
         assert.equal(value.data.total, '25');
         done();
       });
@@ -49,4 +51,3 @@ module.exports = {
     }
   }
 };
-

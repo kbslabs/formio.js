@@ -1,11 +1,34 @@
 import _ from 'lodash';
+import RadioComponent from '../radio/Radio';
 
-import {RadioComponent} from '../radio/Radio';
+export default class SelectBoxesComponent extends RadioComponent {
+  static schema(...extend) {
+    return RadioComponent.schema({
+      type: 'selectboxes',
+      label: 'Select Boxes',
+      key: 'selectBoxes',
+      inline: false
+    }, ...extend);
+  }
 
-export class SelectBoxesComponent extends RadioComponent {
+  static get builderInfo() {
+    return {
+      title: 'Select Boxes',
+      group: 'basic',
+      icon: 'fa fa-plus-square',
+      weight: 60,
+      documentation: 'http://help.form.io/userguide/#selectboxes',
+      schema: SelectBoxesComponent.schema()
+    };
+  }
+
   constructor(component, options, data) {
     super(component, options, data);
     this.component.inputType = 'checkbox';
+  }
+
+  get defaultSchema() {
+    return SelectBoxesComponent.schema();
   }
 
   elementInfo() {
@@ -14,6 +37,13 @@ export class SelectBoxesComponent extends RadioComponent {
     info.attr.type = 'checkbox';
     info.attr.class = 'form-check-input';
     return info;
+  }
+
+  get emptyValue() {
+    return this.component.values.reduce((prev, value) => {
+      prev[value.value] = false;
+      return prev;
+    }, {});
   }
 
   /**
@@ -53,6 +83,16 @@ export class SelectBoxesComponent extends RadioComponent {
    */
   setValue(value, flags) {
     value = value || {};
+    if (typeof value !== 'object') {
+      if (typeof value === 'string') {
+        value = {
+          [value]: true
+        };
+      }
+      else {
+        value = {};
+      }
+    }
     flags = this.getFlags.apply(this, arguments);
     if (Array.isArray(value)) {
       _.each(value, (val) => {

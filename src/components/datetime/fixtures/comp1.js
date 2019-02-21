@@ -1,4 +1,4 @@
-export const component = {
+export default {
   'conditional': {
     'eq': '',
     'when': null,
@@ -35,7 +35,7 @@ export const component = {
   'defaultDate': '',
   'enableTime': true,
   'enableDate': true,
-  'format': 'yyyy-MM-dd hh:mm',
+  'format': 'yyyy-MM-dd hh:mm a',
   'placeholder': 'Enter the date',
   'key': 'date',
   'label': 'Date',

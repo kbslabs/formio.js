@@ -1,4 +1,4 @@
-export const component = {
+export default {
   'conditional': {
     'eq': '',
     'when': null,
@@ -15,9 +15,9 @@ export const component = {
   'protected': false,
   'defaultValue': false,
   'key': 'checkme',
-  'datagridLabel': true,
+  'dataGridLabel': true,
   'label': 'Check me',
-  'hideLabel': true,
+  'hideLabel': false,
   'tableView': true,
   'inputType': 'checkbox',
   'input': true

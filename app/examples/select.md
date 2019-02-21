@@ -4,8 +4,6 @@ layout: vtabs
 section: examples
 weight: 200
 ---
-### Select Dropdowns
-
 Form.io incorporates the amazing [Choices.js](https://github.com/jshjohnson/Choices) library to be used as a Select control,
 but also has the ability to render raw HTML select dropdowns. Below are some examples of different configurations for 
 Select dropdowns.
@@ -246,6 +244,53 @@ Formio.createForm(document.getElementById('url-select'), {
         </script>
       </td>
     </tr>
+    <tr>
+        <td>
+            <strong>Infinite Scroll</strong>  
+            <p>When using the Resource or URL type of select fields, it will automatically paginate the URL as they user is scrolling down the select list. this is commonly referred to as <strong>Infinite Scroll</strong>. When using the Resource component, this will automatically work, but for URL type of selects, you can add tokens {% raw %}{{ limit }}, {{ skip }}, or {{ page }}{% endraw %} to pass to your URL.</p> 
+    {% highlight js %} 
+    Formio.createForm(document.getElementById('lazy-load'), {
+      components: [
+        {
+          type: 'select',
+          label: 'Companies',
+          key: 'companies',
+          placeholder: 'Select a company',
+          dataSrc: 'url',
+          data: {
+            url: 'https://example.form.io/company/submission?limit={% raw %}{{ limit }}{% endraw %}&skip={% raw %}{{ skip }}{% endraw %}'
+          },
+          limit: 10,
+          valueProperty: 'data.name',
+          searchField: 'data.name',
+          lazyLoad: true,
+          template: '<span>{% raw %}{{ item.data.name }}{% endraw %}</span>'
+        }
+      ]
+    });
+    {% endhighlight %}
+          </td>
+          <td>
+            <div id="infinite-scroll"></div>
+            <script type="text/javascript">
+              createSelectForm('infinite-scroll', {
+                type: 'select',
+                label: 'Companies',
+                key: 'companies',
+                placeholder: 'Select a company',
+                dataSrc: 'url',
+                data: {
+                  url: 'https://example.form.io/company/submission?limit={% raw %}{{ limit }}{% endraw %}&skip={% raw %}{{ skip }}{% endraw %}'
+                },
+                limit: 10,
+                valueProperty: 'data.name',
+                searchField: 'data.name',
+                lazyLoad: true,
+                template: '<span>{% raw %}{{ item.data.name }}{% endraw %}</span>'
+              });
+            </script>
+          </td>
+        </tr>
     <tr>
       <td>
         <strong>Lazy Loading</strong>  

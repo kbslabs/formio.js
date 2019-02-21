@@ -1,7 +1,6 @@
-import assert from 'power-assert';
-import _each from 'lodash/each';
-import { Harness } from '../harness';
-module.exports = {
+import Harness from '../harness';
+
+export default {
   title: 'Conditional Form Test',
   form: {
     components: [
@@ -158,37 +157,31 @@ module.exports = {
     ]
   },
   tests: {
-    'Test hidden components': (form, done) => {
-      let inputs = Harness.testElements(form, 'input[type="text"]', 4);
+    'Test hidden components'(form, done) {
+      Harness.testElements(form, 'input[type="text"]', 4);
       Harness.testConditionals(form, {data: {}}, ['typeMe', 'typeThe', 'typeMonkey', 'monkey'], done);
     },
-    'Test validation errors on typeShow field': (form, done) => {
-      Harness.testErrors(form, {data: {
-        typeShow: 'sho',
-        typeMe: '',
-        typeThe: '',
-        typeMonkey: ''
-      }}, [
+    'Test validation errors on typeShow field'(form, done) {
+      Harness.testErrors(
+        form,
         {
-          component: 'typeShow',
-          message: 'You must type "Show"'
-        }
-      ], done);
+          data: {
+            typeShow: 'sho',
+            typeMe: '',
+            typeThe: '',
+            typeMonkey: ''
+          }
+        },
+        [
+          {
+            component: 'typeShow',
+            message: 'You must type "Show"'
+          }
+        ],
+        done
+      );
     },
-    'Test validation errors on typeMe field': (form, done) => {
-      Harness.testErrors(form, {data: {
-        typeShow: 'Show',
-        typeMe: '',
-        typeThe: '',
-        typeMonkey: ''
-      }}, [
-        {
-          component: 'typeMe',
-          message: 'You must type "Me"'
-        }
-      ], done);
-    },
-    'Test validation errors on typeMe field': (form, done) => {
+    'Test validation errors on typeMe field'(form, done) {
       Harness.testErrors(form, {data: {
         typeShow: 'Show',
         typeMe: 'me',
@@ -201,7 +194,7 @@ module.exports = {
         }
       ], done);
     },
-    'Test validation errors on typeThe field': (form, done) => {
+    'Test validation errors on typeThe field'(form, done) {
       Harness.testErrors(form, {data: {
         typeShow: 'Show',
         typeMe: 'Me',
@@ -214,7 +207,7 @@ module.exports = {
         }
       ], done);
     },
-    'Test validation errors on typeMonkey field': (form, done) => {
+    'Test validation errors on typeMonkey field'(form, done) {
       Harness.testErrors(form, {data: {
         typeShow: 'Show',
         typeMe: 'Me',
@@ -227,14 +220,14 @@ module.exports = {
         }
       ], done);
     },
-    'Test conditional when typeShow is set': (form, done) => {
+    'Test conditional when typeShow is set'(form, done) {
       Harness.testConditionals(form, {
         data: {
           typeShow: 'Show'
         }
       }, ['typeThe', 'typeMonkey', 'monkey'], done);
     },
-    'Test conditional when typeShow, typeMe is set': (form, done) => {
+    'Test conditional when typeShow, typeMe is set'(form, done) {
       Harness.testConditionals(form, {
         data: {
           typeShow: 'Show',
@@ -242,7 +235,7 @@ module.exports = {
         }
       }, ['typeMonkey', 'monkey'], done);
     },
-    'Test conditional when typeShow, typeMe, typeThe is set': (form, done) => {
+    'Test conditional when typeShow, typeMe, typeThe is set'(form, done) {
       Harness.testConditionals(form, {
         data: {
           typeShow: 'Show',
@@ -251,7 +244,7 @@ module.exports = {
         }
       }, ['monkey'], done);
     },
-    'Test conditional when typeShow, typeMe, typeThe, typeMonkey is set': (form, done) => {
+    'Test conditional when typeShow, typeMe, typeThe, typeMonkey is set'(form, done) {
       Harness.testConditionals(form, {
         data: {
           typeShow: 'Show',
@@ -263,4 +256,3 @@ module.exports = {
     }
   }
 };
-

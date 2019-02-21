@@ -1,10 +1,9 @@
 /* globals StripeCheckout */
 import _ from 'lodash';
+import ButtonComponent from '../../../components/button/Button';
+import Formio from '../../../Formio';
 
-import {BaseComponent} from '../../../components/base/Base';
-import {ButtonComponent} from '../../../components/button/Button';
-
-export class StripeCheckoutComponent extends ButtonComponent {
+export default class StripeCheckoutComponent extends ButtonComponent {
   constructor(component, options, data) {
     super(component, options, data);
 
@@ -15,7 +14,7 @@ export class StripeCheckoutComponent extends ButtonComponent {
      * Promise when Stripe is ready.
      * @type {Promise}
      */
-    this.stripeCheckoutReady = BaseComponent.requireLibrary('stripeCheckout', 'StripeCheckout', src, true);
+    this.stripeCheckoutReady = Formio.requireLibrary('stripeCheckout', 'StripeCheckout', src, true);
 
     /**
      * Keep initial component action
@@ -116,11 +115,15 @@ export class StripeCheckoutComponent extends ButtonComponent {
       }
       this.handler = StripeCheckout.configure(handlerConfiguration);
 
-      this.on('customEvent', this.onClickButton.bind(this));
+      this.on('customEvent', this.onClickButton.bind(this), true);
 
       this.addEventListener(window, 'popstate', () => {
         this.handler.close();
       });
     });
   }
+}
+
+if (typeof global === 'object' && global.Formio && global.Formio.registerComponent) {
+  global.Formio.registerComponent('stripeCheckout', StripeCheckoutComponent);
 }

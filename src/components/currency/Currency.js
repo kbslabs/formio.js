@@ -1,11 +1,29 @@
 import maskInput from 'vanilla-text-mask';
-import {createNumberMask} from 'text-mask-addons';
+import { createNumberMask } from 'text-mask-addons';
 import _ from 'lodash';
-import {getCurrencyAffixes} from '../../utils';
+import { getCurrencyAffixes } from '../../utils/utils';
+import NumberComponent from '../number/Number';
 
-import {NumberComponent} from '../number/Number';
+export default class CurrencyComponent extends NumberComponent {
+  static schema(...extend) {
+    return NumberComponent.schema({
+      type: 'currency',
+      label: 'Currency',
+      key: 'currency'
+    }, ...extend);
+  }
 
-export class CurrencyComponent extends NumberComponent {
+  static get builderInfo() {
+    return {
+      title: 'Currency',
+      group: 'advanced',
+      icon: 'fa fa-usd',
+      documentation: 'http://help.form.io/userguide/#currency',
+      weight: 70,
+      schema: CurrencyComponent.schema()
+    };
+  }
+
   constructor(component, options, data) {
     // Currency should default to have a delimiter unless otherwise specified.
     if (component && !component.hasOwnProperty('delimiter')) {
@@ -17,10 +35,14 @@ export class CurrencyComponent extends NumberComponent {
       currency: this.component.currency,
       decimalLimit: this.decimalLimit,
       decimalSeparator: this.decimalSeparator,
-      lang: this.options.language,
+      lang: this.options.language
     });
-    this.prefix = affixes.prefix;
-    this.suffix = affixes.suffix;
+    this.prefix = this.options.prefix || affixes.prefix;
+    this.suffix = this.options.suffix || affixes.suffix;
+  }
+
+  get defaultSchema() {
+    return CurrencyComponent.schema();
   }
 
   parseNumber(value) {
@@ -65,13 +87,5 @@ export class CurrencyComponent extends NumberComponent {
     }
 
     return super.clearInput(input);
-  }
-
-  formatValue(value) {
-    if (this.component.requireDecimals && value && !value.includes(this.decimalSeparator)) {
-      return `${value}${this.decimalSeparator}${_.repeat('0', this.decimalLimit)}`;
-    }
-
-    return value;
   }
 }

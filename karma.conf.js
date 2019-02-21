@@ -1,22 +1,54 @@
 module.exports = function(config) {
+  const { KARMA_FILE = 'src/**/*.spec.js' } = process.env;
+  const FILE = KARMA_FILE || 'src/**/*.spec.js';
   config.set({
     basePath: '',
-    frameworks: ['browserify', 'mocha'],
-    browserify: {
-      debug: true,
-      transform: [
-        ['babelify', {plugins: ['babel-plugin-espower']}]
-      ]
+    frameworks: ['mocha'],
+    webpack: {
+      mode: 'development',
+      module: {
+        rules: [
+          {
+            test: /\.js$/,
+            exclude: /node_modules/,
+            use: {
+              loader: 'babel-loader',
+              options: {
+                presets: ['@babel/env'],
+                plugins: ['@babel/plugin-proposal-export-default-from']
+              }
+            }
+          }
+        ]
+      }
     },
     files: [
-      'src/**/*.spec.js'
+      'app/bootstrap/css/bootstrap.min.css',
+      'app/fontawesome/css/font-awesome.min.css',
+      'dist/formio.full.min.css',
+      {
+        pattern: 'dist/fonts/*',
+        watched: false,
+        included: false,
+        served: true,
+        nocache: false
+      },
+      {
+        pattern: 'dist/icons/*',
+        watched: false,
+        included: false,
+        served: true,
+        nocache: false
+      },
+      FILE
     ],
     exclude: [
     ],
     preprocessors: {
-      'src/**/*.spec.js': 'browserify'
+      [FILE]: ['webpack']
     },
-    reporters: ['progress'],
+    browserNoActivityTimeout: 30000,
+    reporters: ['mocha'],
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
@@ -24,5 +56,5 @@ module.exports = function(config) {
     browsers: ['Chrome'],
     singleRun: false,
     concurrency: Infinity
-  })
-}
+  });
+};

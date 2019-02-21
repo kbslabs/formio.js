@@ -4,10 +4,9 @@ layout: vtabs
 section: examples
 weight: 400
 ---
-### Kitchen Sink
 Here is a large form which includes all fields with many different configurations (the kitchen sink).
 
-<div class="well">
+<div class="card card-body bg-light">
   <div id="formio"></div>
   <script type="text/javascript">
   Formio.createForm(document.getElementById('formio'), {
@@ -70,7 +69,7 @@ Here is a large form which includes all fields with many different configuration
                                   input: true,
                                   inputType: 'checkbox',
                                   tableView: true,
-                                  hideLabel: true,
+                                  hideLabel: false,
                                   label: 'Do you have a phone number?',
                                   key: 'havePhoneNumber',
                                   defaultValue: false,
@@ -242,7 +241,8 @@ Here is a large form which includes all fields with many different configuration
                   inputMask: '',
                   inputType: 'text',
                   tableView: true,
-                  input: true
+                  input: true,
+                  reorder: true
               }
           ],
           tableView: true,
@@ -489,7 +489,7 @@ Here is a large form which includes all fields with many different configuration
                       input: true,
                       inputType: 'checkbox',
                       tableView: false,
-                      hideLabel: true,
+                      hideLabel: false,
                       label: 'Checkbox',
                       key: 'checkbox',
                       defaultValue: true,
@@ -753,7 +753,7 @@ Here is a large form which includes all fields with many different configuration
           input: true,
           inputType: 'checkbox',
           tableView: false,
-          hideLabel: true,
+          hideLabel: false,
           label: 'Checkbox 2',
           key: 'checkbox2',
           defaultValue: false,

@@ -1,8 +1,33 @@
 import _ from 'lodash';
+import BaseComponent from '../base/Base';
+import { boolValue } from '../../utils/utils';
 
-import {BaseComponent} from '../base/Base';
+export default class SurveyComponent extends BaseComponent {
+  static schema(...extend) {
+    return BaseComponent.schema({
+      type: 'survey',
+      label: 'Survey',
+      key: 'survey',
+      questions: [],
+      values: []
+    }, ...extend);
+  }
 
-export class SurveyComponent extends BaseComponent {
+  static get builderInfo() {
+    return {
+      title: 'Survey',
+      group: 'advanced',
+      icon: 'fa fa-list',
+      weight: 170,
+      documentation: 'http://help.form.io/userguide/#survey',
+      schema: SurveyComponent.schema()
+    };
+  }
+
+  get defaultSchema() {
+    return SurveyComponent.schema();
+  }
+
   build() {
     if (this.viewOnly) {
       this.viewOnlyBuild();
@@ -44,7 +69,7 @@ export class SurveyComponent extends BaseComponent {
           });
           const input = this.ce('input', {
             type: 'radio',
-            name: `data[${this.component.key}][${question.value}]`,
+            name: this.getInputName(question),
             value: value.value,
             id: `${this.id}-${question.value}-${value.value}`
           });
@@ -55,6 +80,7 @@ export class SurveyComponent extends BaseComponent {
       });
       this.table.appendChild(tbody);
       this.element.appendChild(this.table);
+      this.errorContainer = this.element;
       if (labelAtTheBottom) {
         this.createLabel(this.element);
       }
@@ -65,6 +91,8 @@ export class SurveyComponent extends BaseComponent {
       }
       this.autofocus();
     }
+
+    this.attachLogic();
   }
 
   setValue(value, flags) {
@@ -72,10 +100,10 @@ export class SurveyComponent extends BaseComponent {
     if (!value) {
       return;
     }
-    const key = `data[${this.component.key}]`;
+
     _.each(this.component.questions, (question) => {
       _.each(this.inputs, (input) => {
-        if (input.name === (`${key}[${question.value}]`)) {
+        if (input.name === this.getInputName(question)) {
           input.checked = (input.value === value[question.value]);
         }
       });
@@ -83,21 +111,32 @@ export class SurveyComponent extends BaseComponent {
     this.updateValue(flags);
   }
 
+  get emptyValue() {
+    return {};
+  }
+
   getValue() {
     if (this.viewOnly) {
       return this.dataValue;
     }
     const value = {};
-    const key = `data[${this.component.key}]`;
     _.each(this.component.questions, (question) => {
       _.each(this.inputs, (input) => {
-        if (input.checked && (input.name === (`${key}[${question.value}]`))) {
+        if (input.checked && (input.name === this.getInputName(question))) {
           value[question.value] = input.value;
           return false;
         }
       });
     });
     return value;
+  }
+
+  validateRequired(setting, value) {
+    if (!boolValue(setting)) {
+      return true;
+    }
+    return this.component.questions.reduce((result, question) =>
+      result && Boolean(value[question.value]), true);
   }
 
   getView(value) {
@@ -129,5 +168,9 @@ export class SurveyComponent extends BaseComponent {
 
     table.appendChild(tbody);
     return table.outerHTML;
+  }
+
+  getInputName(question) {
+    return `${this.options.name}[${question.value}]`;
   }
 }

@@ -1,27 +1,56 @@
 import _ from 'lodash';
+import BaseComponent from '../base/Base';
 
-import {BaseComponent} from '../base/Base';
+export default class HTMLComponent extends BaseComponent {
+  static schema(...extend) {
+    return BaseComponent.schema({
+      label: 'HTML',
+      type: 'htmlelement',
+      tag: 'p',
+      attrs: [],
+      content: '',
+      input: false,
+      persistent: false
+    }, ...extend);
+  }
 
-export class HTMLComponent extends BaseComponent {
+  static get builderInfo() {
+    return {
+      title: 'HTML Element',
+      group: 'advanced',
+      icon: 'fa fa-code',
+      weight: 90,
+      documentation: 'http://help.form.io/userguide/#html-element-component',
+      schema: HTMLComponent.schema()
+    };
+  }
+
+  get defaultSchema() {
+    return HTMLComponent.schema();
+  }
+
   setHTML() {
-    this.element.innerHTML = this.interpolate(this.component.content, {data: this.data, row: this.row});
+    this.htmlElement.innerHTML = this.interpolate(this.component.content);
   }
 
   build() {
-    this.element = this.ce(this.component.tag, {
+    this.createElement();
+    this.htmlElement = this.ce(this.component.tag, {
+      id: this.id,
       class: this.component.className
     });
     _.each(this.component.attrs, (attr) => {
       if (attr.attr) {
-        this.element.setAttribute(attr.attr, attr.value);
+        this.htmlElement.setAttribute(attr.attr, attr.value);
       }
     });
     if (this.component.content) {
       this.setHTML();
     }
-
     if (this.component.refreshOnChange) {
-      this.on('change', () => this.setHTML());
+      this.on('change', () => this.setHTML(), true);
     }
+    this.element.appendChild(this.htmlElement);
+    this.attachLogic();
   }
 }

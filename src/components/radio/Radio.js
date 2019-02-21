@@ -1,8 +1,37 @@
 import _ from 'lodash';
+import BaseComponent from '../base/Base';
 
-import {BaseComponent} from '../base/Base';
+export default class RadioComponent extends BaseComponent {
+  static schema(...extend) {
+    return BaseComponent.schema({
+      type: 'radio',
+      inputType: 'radio',
+      label: 'Radio',
+      key: 'radio',
+      values: [{ label: '', value: '' }],
+      fieldSet: false
+    }, ...extend);
+  }
 
-export class RadioComponent extends BaseComponent {
+  static get builderInfo() {
+    return {
+      title: 'Radio',
+      group: 'basic',
+      icon: 'fa fa-dot-circle-o',
+      weight: 80,
+      documentation: 'http://help.form.io/userguide/#radio',
+      schema: RadioComponent.schema()
+    };
+  }
+
+  get defaultSchema() {
+    return RadioComponent.schema();
+  }
+
+  get emptyValue() {
+    return '';
+  }
+
   elementInfo() {
     const info = super.elementInfo();
     info.type = 'input';
@@ -13,15 +42,10 @@ export class RadioComponent extends BaseComponent {
 
   createInput(container) {
     const inputGroup = this.ce('div', {
-      class: 'input-group'
+      class: 'form-group'
     });
     const labelOnTheTopOrOnTheLeft = this.optionsLabelOnTheTopOrLeft();
     const wrappers = [];
-
-    if (this.component.inputType === 'radio') {
-      this.info.attr.name += this.id;
-    }
-
     _.each(this.component.values, (value) => {
       const wrapperClass = `form-check ${this.optionWrapperClass}`;
       const labelWrapper = this.ce('div', {
@@ -34,15 +58,22 @@ export class RadioComponent extends BaseComponent {
       this.addShortcut(label, value.shortcut);
 
       // Determine the attributes for this input.
-      const inputId = `${this.id}${this.row}-${value.value}`;
+      let inputId = this.id;
+      if (this.options.row) {
+        inputId += `-${this.options.row}`;
+      }
+      inputId += `-${value.value}`;
       this.info.attr.id = inputId;
       this.info.attr.value = value.value;
       label.setAttribute('for', this.info.attr.id);
 
       // Create the input.
       const input = this.ce('input');
-      _.each(this.info.attr, (value, key) => {
-        input.setAttribute(key, value);
+      _.each(this.info.attr, (attrValue, key) => {
+        if (key === 'name' && this.component.inputType === 'radio') {
+          attrValue += `[${this.id}]`;
+        }
+        input.setAttribute(key, attrValue);
       });
 
       const labelSpan = this.ce('span');
@@ -156,24 +187,14 @@ export class RadioComponent extends BaseComponent {
   }
 
   setValueAt(index, value) {
-    if (this.inputs && this.inputs[index]) {
-      let inputValue = this.inputs[index].value;
-      if (inputValue === 'true') {
-        inputValue = true;
-      }
-      else if (inputValue === 'false') {
-        inputValue = false;
-      }
-      else if (!isNaN(parseInt(inputValue, 10)) && isFinite(inputValue)) {
-        inputValue = parseInt(inputValue, 10);
-      }
-
-      this.inputs[index].checked = (inputValue === value);
+    if (this.inputs && this.inputs[index] && value !== null && value !== undefined) {
+      const inputValue = this.inputs[index].value;
+      this.inputs[index].checked = (inputValue === value.toString());
     }
   }
 
-  updateValue(value, flags) {
-    const changed = super.updateValue(value, flags);
+  updateValue(flags, value) {
+    const changed = super.updateValue(flags, value);
     if (changed) {
       //add/remove selected option class
       const value = this.dataValue;
@@ -181,7 +202,7 @@ export class RadioComponent extends BaseComponent {
 
       _.each(this.wrappers, (wrapper, index) => {
         const input = this.inputs[index];
-        if (input.value === value) {
+        if (input.value.toString() === value.toString()) {
           //add class to container when selected
           this.addClass(wrapper, optionSelectedClass);
         }
@@ -191,9 +212,5 @@ export class RadioComponent extends BaseComponent {
       });
     }
     return changed;
-  }
-
-  destroy() {
-    super.destroy.apply(this, Array.prototype.slice.apply(arguments));
   }
 }

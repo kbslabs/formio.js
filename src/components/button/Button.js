@@ -1,15 +1,49 @@
 import _ from 'lodash';
+import BaseComponent from '../base/Base';
+import { flattenComponents } from '../../utils/utils';
 
-import {BaseComponent} from '../base/Base';
-import FormioUtils from '../../utils';
+export default class ButtonComponent extends BaseComponent {
+  static schema(...extend) {
+    return BaseComponent.schema({
+      type: 'button',
+      label: 'Submit',
+      key: 'submit',
+      size: 'md',
+      leftIcon: '',
+      rightIcon: '',
+      block: false,
+      action: 'submit',
+      persistent: false,
+      disableOnInvalid: false,
+      theme: 'default',
+      dataGridLabel: true
+    }, ...extend);
+  }
 
-export class ButtonComponent extends BaseComponent {
+  static get builderInfo() {
+    return {
+      title: 'Button',
+      group: 'basic',
+      icon: 'fa fa-stop',
+      documentation: 'http://help.form.io/userguide/#button',
+      weight: 110,
+      schema: ButtonComponent.schema()
+    };
+  }
+
+  get defaultSchema() {
+    return ButtonComponent.schema();
+  }
+
   elementInfo() {
     const info = super.elementInfo();
     info.type = 'button';
     info.attr.type = (['submit', 'saveState'].includes(this.component.action)) ? 'submit' : 'button';
     this.component.theme = this.component.theme || 'default';
     info.attr.class = `btn btn-${this.component.theme}`;
+    if (this.component.size) {
+      info.attr.class += ` btn-${this.component.size}`;
+    }
     if (this.component.block) {
       info.attr.class += ' btn-block';
     }
@@ -20,12 +54,24 @@ export class ButtonComponent extends BaseComponent {
   }
 
   set loading(loading) {
-    this.setLoading(this.button, loading);
+    this.setLoading(this.buttonElement, loading);
   }
 
   set disabled(disabled) {
+    // Do not allow a component to be disabled if it should be always...
+    if ((!disabled && this.shouldDisable) || (disabled && !this.shouldDisable)) {
+      return;
+    }
     super.disabled = disabled;
-    this.setDisabled(this.button, disabled);
+    this.setDisabled(this.buttonElement, disabled);
+  }
+
+  // No label needed for buttons.
+  createLabel() {}
+
+  createInput(container) {
+    this.buttonElement = super.createInput(container);
+    return this.buttonElement;
   }
 
   get emptyValue() {
@@ -57,48 +103,44 @@ export class ButtonComponent extends BaseComponent {
     return className;
   }
 
+  buttonMessage(message) {
+    return this.ce('span', { class: 'help-block' }, this.text(message));
+  }
+
+  /* eslint-disable max-statements */
   build() {
-    if (this.viewOnly) {
+    if (this.viewOnly || this.options.hideButtons) {
       this.component.hidden = true;
     }
 
     this.dataValue = false;
     this.hasError = false;
     this.createElement();
-    this.element.appendChild(this.button = this.ce(this.info.type, this.info.attr));
-    this.addShortcut(this.button);
-    this.hook('input', this.button, this.element);
-
+    this.createInput(this.element);
+    this.addShortcut(this.buttonElement);
     if (this.component.leftIcon) {
-      this.button.appendChild(this.ce('span', {
+      this.buttonElement.appendChild(this.ce('span', {
         class: this.component.leftIcon
       }));
-      this.button.appendChild(this.text(' '));
+      this.buttonElement.appendChild(this.text(' '));
     }
 
-    if (this.component.label) {
+    if (!this.labelIsHidden()) {
       this.labelElement = this.text(this.addShortcutToLabel());
-      this.button.appendChild(this.labelElement);
-      this.createTooltip(this.button, null, this.iconClass('question-sign'));
+      this.buttonElement.appendChild(this.labelElement);
+      this.createTooltip(this.buttonElement, null, this.iconClass('question-sign'));
     }
-
     if (this.component.rightIcon) {
-      this.button.appendChild(this.text(' '));
-      this.button.appendChild(this.ce('span', {
+      this.buttonElement.appendChild(this.text(' '));
+      this.buttonElement.appendChild(this.ce('span', {
         class: this.component.rightIcon
       }));
     }
 
+    let onChange = null;
+    let onError = null;
     if (this.component.action === 'submit') {
-      const errorContainer = this.ce('div', {
-        class: 'has-error'
-      });
-      const error = this.ce('span', {
-        class: 'help-block'
-      });
-      error.appendChild(this.text(this.errorMessage('error')));
-      errorContainer.appendChild(error);
-
+      const message = this.ce('div');
       this.on('submitButton', () => {
         this.loading = true;
         this.disabled = true;
@@ -106,21 +148,33 @@ export class ButtonComponent extends BaseComponent {
       this.on('submitDone', () => {
         this.loading = false;
         this.disabled = false;
+        this.empty(message);
+        this.addClass(this.buttonElement, 'btn-success submit-success');
+        this.removeClass(this.buttonElement, 'btn-danger submit-fail');
+        this.addClass(message, 'has-success');
+        this.removeClass(message, 'has-error');
+        this.append(message);
       }, true);
-      this.on('change', (value) => {
-        this.loading = false;
-        const isValid = this.root.isValid(value.data, true);
-        this.disabled = this.options.readOnly || (this.component.disableOnInvalid && !isValid);
+      onChange = (value, isValid) => {
+        this.removeClass(this.buttonElement, 'btn-success submit-success');
+        this.removeClass(this.buttonElement, 'btn-danger submit-fail');
         if (isValid && this.hasError) {
           this.hasError = false;
-          this.removeChild(errorContainer);
+          this.empty(message);
+          this.removeChild(message);
+          this.removeClass(message, 'has-success');
+          this.removeClass(message, 'has-error');
         }
-      }, true);
-      this.on('error', () => {
-        this.loading = false;
+      };
+      onError = () => {
         this.hasError = true;
-        this.append(errorContainer);
-      }, true);
+        this.removeClass(this.buttonElement, 'btn-success submit-success');
+        this.addClass(this.buttonElement, 'btn-danger submit-fail');
+        this.empty(message);
+        this.removeClass(message, 'has-success');
+        this.addClass(message, 'has-error');
+        this.append(message);
+      };
     }
 
     if (this.component.action === 'url') {
@@ -132,17 +186,31 @@ export class ButtonComponent extends BaseComponent {
         this.loading = false;
         this.disabled = false;
       }, true);
-      this.on('change', (value) => {
-        this.loading = false;
-        this.disabled = (this.component.disableOnInvalid && !this.root.isValid(value.data, true));
-      }, true);
-      this.on('error', () => {
-        this.loading = false;
-      }, true);
     }
-    this.addEventListener(this.button, 'click', (event) => {
+
+    this.on('change', (value) => {
+      this.loading = false;
+      this.disabled = this.options.readOnly || (this.component.disableOnInvalid && !value.isValid);
+      if (onChange) {
+        onChange(value, value.isValid);
+      }
+    }, true);
+
+    this.on('error', () => {
+      this.loading = false;
+      if (onError) {
+        onError();
+      }
+    }, true);
+
+    this.addEventListener(this.buttonElement, 'click', (event) => {
+      this.triggerReCaptcha();
       this.dataValue = true;
+      if (this.component.action !== 'submit' && this.component.showValidations) {
+        this.emit('checkValidity', this.data);
+      }
       switch (this.component.action) {
+        case 'saveState':
         case 'submit':
           event.preventDefault();
           event.stopPropagation();
@@ -151,10 +219,10 @@ export class ButtonComponent extends BaseComponent {
           });
           break;
         case 'event':
-          this.emit(this.component.event, this.data);
-          this.events.emit(this.component.event, this.data);
+          this.emit(this.interpolate(this.component.event), this.data);
+          this.events.emit(this.interpolate(this.component.event), this.data);
           this.emit('customEvent', {
-            type: this.component.event,
+            type: this.interpolate(this.component.event),
             component: this.component,
             data: this.data,
             event: event
@@ -164,7 +232,7 @@ export class ButtonComponent extends BaseComponent {
           // Get the FormioForm at the root of this component's tree
           const form = this.getRoot();
           // Get the form's flattened schema components
-          const flattened = FormioUtils.flattenComponents(form.component.components, true);
+          const flattened = flattenComponents(form.component.components, true);
           // Create object containing the corresponding HTML element components
           const components = {};
           _.each(flattened, (component, key) => {
@@ -174,21 +242,17 @@ export class ButtonComponent extends BaseComponent {
             }
           });
 
-          try {
-            (new Function('form', 'flattened', 'components', '_merge', 'data',
-              this.component.custom.toString()))(form, flattened, components, _.merge, this.data);
-          }
-          catch (e) {
-            /* eslint-disable no-console */
-            console.warn(`An error occurred evaluating custom logic for ${this.key}`, e);
-            /* eslint-enable no-console */
-          }
+          this.evaluate(this.component.custom, {
+            form,
+            flattened,
+            components
+          });
           break;
         }
         case 'url':
           this.emit('requestButton');
           this.emit('requestUrl', {
-            url: this.component.url,
+            url: this.interpolate(this.component.url),
             headers: this.component.headers
           });
           break;
@@ -221,6 +285,7 @@ export class ButtonComponent extends BaseComponent {
           break;
       }
     });
+
     if (this.shouldDisable) {
       this.disabled = true;
     }
@@ -244,7 +309,9 @@ export class ButtonComponent extends BaseComponent {
     }
 
     this.autofocus();
+    this.attachLogic();
   }
+  /* eslint-enable max-statements */
 
   openOauth() {
     if (!this.root.formio) {
@@ -297,7 +364,7 @@ export class ButtonComponent extends BaseComponent {
             this.root.setAlert('danger', 'OAuth state does not match. Please try logging in again.');
             return;
           }
-          const submission = {data: {}, oauth: {}};
+          const submission = { data: {}, oauth: {} };
           submission.oauth[settings.provider] = params;
           submission.oauth[settings.provider].redirectURI = window.location.origin
             || `${window.location.protocol}//${window.location.host}`;
@@ -322,12 +389,26 @@ export class ButtonComponent extends BaseComponent {
   }
 
   destroy() {
-    super.destroy.apply(this, Array.prototype.slice.apply(arguments));
-    this.removeShortcut(this.element);
+    super.destroy();
+    this.removeShortcut(this.buttonElement);
   }
 
   focus() {
-    this.button.focus();
+    this.buttonElement.focus();
+  }
+
+  triggerReCaptcha() {
+    let recaptchaComponent;
+    this.root.everyComponent((component) => {
+      if (component.component.type === 'recaptcha' &&
+        component.component.eventType === 'buttonClick' &&
+        component.component.buttonKey === this.component.key) {
+        recaptchaComponent = component;
+        return false;
+      }
+    });
+    if (recaptchaComponent) {
+      recaptchaComponent.verify(`${this.component.key}Click`);
+    }
   }
 }
-

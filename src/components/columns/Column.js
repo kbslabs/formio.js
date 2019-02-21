@@ -1,5 +1,24 @@
-import {FormioComponents} from '../Components';
-export class ColumnComponent extends FormioComponents {
+import _ from 'lodash';
+import NestedComponent from '../nested/NestedComponent';
+export default class ColumnComponent extends NestedComponent {
+  constructor(component, options, data) {
+    super(component, options, data);
+    this.noEdit = true;
+  }
+
+  conditionallyVisible(data) {
+    if (!this.component.hideOnChildrenHidden) {
+      return super.conditionallyVisible(data);
+    }
+
+    // Check children components for visibility.
+    if (_.every(this.getComponents(), ['visible', false])) {
+      return false;
+    }
+
+    return super.conditionallyVisible(data);
+  }
+
   get className() {
     const comp   = this.component;
     const width  = ` col-sm-${comp.width  ? comp.width  : 6}`;
