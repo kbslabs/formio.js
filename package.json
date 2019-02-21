@@ -24,7 +24,11 @@
     "lint": "gulp eslint",
     "serve": "jekyll serve --config _config.yml,_config.dev.yml",
     "test": "NODE_OPTIONS=\"--max-old-space-size=4096\" karma start --verbose --single-run",
-    "test:watch": "NODE_OPTIONS=\"--max-old-space-size=4096\" karma start --no-single-run --auto-watch"
+    "test:watch": "NODE_OPTIONS=\"--max-old-space-size=4096\" karma start --no-single-run --auto-watch",
+    "deploy": "npm version major --message \"Deployment version %s [skip ci]\" && npm publish",
+    "preversion": "npm && npm run test",
+    "version": "npm run build",
+    "postversion": "git push && git push --tags"
   },
   "repository": {
     "type": "git",
