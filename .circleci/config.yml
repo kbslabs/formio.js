@@ -5,20 +5,36 @@ jobs:
       - image: circleci/node:8-browsers
         environment:
             CHROME_BIN: "/usr/bin/google-chrome"
+    environment:    
+      # The Service Name must be the same you have in your package.json, Dockerfile &
+      # docker-compose.yml.
+      SERVICE_NAME: formiojs
+      # Git User Email & Name
+      GIT_USER_EMAIL: ci@kelsus.com
+      GIT_USER_NAME: CircleCI
+    branches:
+      only:
+        - kelsus/publish
     steps:
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
           name: Install npm
-          command: npm install
+          command: npm ci
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - node_modules
       - run:
-          name: Test
-          command: npm test
+          name: Allow access to private npm.
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
+      - run:  
+          name: Configure git to commit and push the tag.
+          command: git config --global user.email $GIT_USER_EMAIL && git config --global user.name $GIT_USER_NAME && git branch -u origin/$CIRCLE_BRANCH
+      - deploy: 
+          name: Build and publish npm package
+          command: npm run publish
       - store_artifacts:
           path: test-results.xml
           prefix: tests
