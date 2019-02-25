@@ -803,6 +803,7 @@ export default class FileComponent extends BaseComponent {
               }
               fileInfo.originalName = file.name;
               this.dataValue.push(fileInfo);
+              this.setValue(this.dataValue);
               this.refreshDOM();
               this.triggerChange();
             })
