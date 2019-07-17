@@ -135,5 +135,8 @@
         }
       ]
     ]
+  },
+  "publishConfig": {
+    "registry": "https://kbsforce.jfrog.io/kbsforce/api/npm/npm-local/"
   }
 }
