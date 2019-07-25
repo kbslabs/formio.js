@@ -1,5 +1,5 @@
 {
-  "name": "@kelsus/formiojs",
+  "name": "@kbs/formiojs",
   "version": "3.16.1",
   "description": "Common js library for client side interaction with <form.io>",
   "main": "index.js",
@@ -133,5 +133,8 @@
     "webpack": "^4.29.5",
     "webpack-stream": "^5.2.1",
     "written-number": "^0.9.1"
+  },
+  "publishConfig": {
+    "registry": "https://kbsforce.jfrog.io/kbsforce/api/npm/npm-local/"
   }
 }
