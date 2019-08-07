@@ -17,14 +17,14 @@
   ],
   "scripts": {
     "build": "esdoc;gulp build",
-    "watch": "babel -w ./src/ --out-dir ./lib/",
-    "rebuild": "rm -rf node_modules;npm install;gulp build",
-    "tag": "VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]');git add -A; git commit -m \"Build $Version [skip ci] \";git push origin master;git tag v$VERSION;git push origin --tags;",
-    "publish": "npm test;gulp build;npm run tag;npm publish lib;",
-    "lint": "gulp eslint",
+    "lint": "eslint src",
     "serve": "jekyll serve --config _config.yml,_config.dev.yml",
-    "test": "NODE_OPTIONS=\"--max-old-space-size=4096\" karma start --verbose --single-run",
-    "test:watch": "NODE_OPTIONS=\"--max-old-space-size=4096\" karma start --no-single-run --auto-watch"
+    "test": "./node_modules/karma/bin/karma start --verbose --single-run",
+    "test:watch": "./node_modules/karma/bin/karma start --no-single-run --auto-watch",
+    "deploy": "npm version patch --message \"Deployment version %s [skip ci]\" && npm publish",
+    "preversion": "yarn && yarn run test",
+    "version": "yarn run build",
+    "postversion": "git push && git push --tags"
   },
   "repository": {
     "type": "git",
