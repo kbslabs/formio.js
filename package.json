@@ -17,7 +17,6 @@
   ],
   "scripts": {
     "build": "esdoc;gulp build",
-    "lint": "eslint src",
     "serve": "jekyll serve --config _config.yml,_config.dev.yml",
     "test": "NODE_OPTIONS=\"--max-old-space-size=4096\" karma start --verbose --single-run",
     "test:watch": "NODE_OPTIONS=\"--max-old-space-size=4096\" karma start --no-single-run --auto-watch",
