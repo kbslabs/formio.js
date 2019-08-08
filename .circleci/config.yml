@@ -33,5 +33,8 @@ jobs:
           name: Configure git to commit and push the tag.
           command: git config --global user.email $GIT_USER_EMAIL && git config --global user.name $GIT_USER_NAME && git branch -u origin/$CIRCLE_BRANCH
       - deploy: 
-          name: Test, build and deploy npm package
-          command: npm run deploy
+          name: Build and publish npm package
+          command: npm run publish
+      - store_artifacts:
+          path: test-results.xml
+          prefix: tests
