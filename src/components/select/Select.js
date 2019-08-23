@@ -2,6 +2,7 @@ import Choices from 'choices.js/public/assets/scripts/choices.js';
 import _ from 'lodash';
 import BaseComponent from '../base/Base';
 import Formio from '../../Formio';
+import NativePromise from 'native-promise-only';
 
 export default class SelectComponent extends BaseComponent {
   static schema(...extend) {
@@ -53,17 +54,23 @@ export default class SelectComponent extends BaseComponent {
     // Keep track of the select options.
     this.selectOptions = [];
 
-    // Keep track of the last batch of items loaded.
-    this.currentItems = [];
-    this.loadedItems = 0;
-    this.isScrollLoading = false;
-    this.scrollTop = 0;
+    if (this.isInfiniteScrollProvided) {
+      this.isFromSearch = false;
+
+      this.searchServerCount = null;
+      this.defaultServerCount = null;
+
+      this.isScrollLoading = false;
+
+      this.searchDownloadedResources = [];
+      this.defaultDownloadedResources = [];
+    }
 
     // If this component has been activated.
     this.activated = false;
 
     // Determine when the items have been loaded.
-    this.itemsLoaded = new Promise((resolve) => {
+    this.itemsLoaded = new NativePromise((resolve) => {
       this.itemsLoadedResolve = resolve;
     });
   }
@@ -89,6 +96,18 @@ export default class SelectComponent extends BaseComponent {
 
   createWrapper() {
     return false;
+  }
+
+  get isSelectResource() {
+    return this.component.dataSrc === 'resource';
+  }
+
+  get isSelectURL() {
+    return this.component.dataSrc === 'url';
+  }
+
+  get isInfiniteScrollProvided() {
+    return this.isSelectResource || this.isSelectURL;
   }
 
   itemTemplate(data) {
@@ -139,9 +158,30 @@ export default class SelectComponent extends BaseComponent {
     return data;
   }
 
+  addAutofillHoneyInput(container, input) {
+    const autofillInput = this.ce('input', {
+      type: 'text',
+      name: this.info.attr.name,
+      style: 'display: none',
+    });
+
+    input.addEventListener('change', (event) => {
+      autofillInput.value = JSON.stringify(event.detail ? event.detail.value : event.target.value);
+    });
+
+    autofillInput.addEventListener('change', (event) => {
+      this.updateValue({}, JSON.parse(event.target.value));
+    });
+
+    container.appendChild(autofillInput);
+  }
+
   createInput(container) {
     this.selectContainer = container;
     this.selectInput = super.createInput(container);
+    if (this.component.widget !== 'html5') {
+      this.addAutofillHoneyInput(this.selectContainer, this.selectInput);
+    }
   }
 
   /**
@@ -183,9 +223,7 @@ export default class SelectComponent extends BaseComponent {
       if (this.choices) {
         // Add the currently selected choices if they don't already exist.
         const currentChoices = Array.isArray(this.dataValue) ? this.dataValue : [this.dataValue];
-        return currentChoices.reduce((defaultAdded, choice) => {
-          return (this.addCurrentChoices(choice, items) || defaultAdded);
-        }, false);
+        return this.addCurrentChoices(currentChoices, items);
       }
       else if (!this.component.multiple) {
         this.addPlaceholder(this.selectInput);
@@ -194,49 +232,13 @@ export default class SelectComponent extends BaseComponent {
     return false;
   }
 
-  /**
-   * Return if the list is loading from scroll. or not.
-   *
-   * @return {boolean|*}
-   */
-  get scrollLoading() {
-    return this.isScrollLoading;
-  }
-
-  /**
-   * Sets the scroll loading state.
-   *
-   * @param isScrolling
-   * @return {*}
-   */
-  set scrollLoading(isScrolling) {
-    // Only continue if they are different.
-    if (this.isScrollLoading === isScrolling) {
+  disableInfiniteScroll() {
+    if (!this.downloadedResources) {
       return;
     }
-    if (isScrolling) {
-      this.choices.setChoices([...this.selectOptions, {
-        value: '',
-        label: 'Loading...',
-        disabled: true,
-      }], 'value', 'label', true);
-    }
-    else {
-      const loadingItem = this.scrollList.querySelector('.choices__item--disabled');
-      if (loadingItem) {
-        // Remove the loading text.
-        this.scrollList.removeChild(loadingItem);
-      }
-    }
-    this.scrollList.scrollTo(0, this.scrollTop);
-    this.isScrollLoading = isScrolling;
-    return isScrolling;
-  }
 
-  stopInfiniteScroll() {
-    // Remove the infinite scroll listener.
-    this.scrollLoading = false;
-    this.scrollList.removeEventListener('scroll', this.onScroll);
+    this.downloadedResources.serverCount = this.downloadedResources.length;
+    this.serverCount = this.downloadedResources.length;
   }
 
   /* eslint-disable max-statements */
@@ -261,45 +263,48 @@ export default class SelectComponent extends BaseComponent {
     }
 
     if (!this.choices && this.selectInput) {
-      if (this.loading) {
-        this.removeChildFrom(this.selectInput, this.selectContainer);
-      }
-
       this.selectInput.innerHTML = '';
     }
 
     // If they provided select values, then we need to get them instead.
     if (this.component.selectValues) {
-      items = _.get(items, this.component.selectValues);
+      items = _.get(items, this.component.selectValues, items) || [];
     }
 
-    if (this.scrollLoading) {
-      // Check if the first two items are equal, and if so, then we can assume that this is the same list
-      // and we should skip over the loading.
-      if (
-        this.currentItems.length &&
-        items.length &&
-        _.isEqual(this.currentItems[0], items[0]) &&
-        _.isEqual(this.currentItems[1], items[1])
-      ) {
-        this.stopInfiniteScroll();
-        return;
+    let areItemsEqual;
+
+    if (this.isInfiniteScrollProvided) {
+      areItemsEqual = this.isSelectURL ? _.isEqual(items, this.downloadedResources) : false;
+
+      const areItemsEnded = this.component.limit > items.length;
+      const areItemsDownloaded = areItemsEqual
+        && this.downloadedResources
+        && this.downloadedResources.length === items.length;
+
+      if (areItemsEnded) {
+        this.disableInfiniteScroll();
+      }
+      else if (areItemsDownloaded) {
+        this.selectOptions = [];
+      }
+      else {
+        this.serverCount = items.serverCount;
+      }
+    }
+
+    if (this.isScrollLoading && items) {
+      if (!areItemsEqual) {
+        this.downloadedResources = this.downloadedResources
+          ? this.downloadedResources.concat(items)
+          : items;
       }
 
-      // If we have gone beyond our limit, then stop.
-      if (items.limit && (items.length < items.limit)) {
-        this.stopInfiniteScroll();
-      }
-
-      // Increment the loadedItems.
-      this.loadedItems += items.length;
+      this.downloadedResources.serverCount = items.serverCount || this.downloadedResources.serverCount;
     }
     else {
+      this.downloadedResources = items || [];
       this.selectOptions = [];
-      this.loadedItems = items.length;
     }
-
-    this.currentItems = items;
 
     // Add the value options.
     if (!fromSearch) {
@@ -318,13 +323,9 @@ export default class SelectComponent extends BaseComponent {
     if (this.choices) {
       this.choices.setChoices(this.selectOptions, 'value', 'label', true);
     }
-    else if (this.loading) {
-      // Re-attach select input.
-      this.appendTo(this.selectInput, this.selectContainer);
-    }
 
     // We are no longer loading.
-    this.scrollLoading = false;
+    this.isScrollLoading = false;
     this.loading = false;
 
     // If a value is provided, then select it.
@@ -365,7 +366,7 @@ export default class SelectComponent extends BaseComponent {
     }
 
     const limit = this.component.limit || 100;
-    const skip = this.loadedItems || 0;
+    const skip = this.isScrollLoading ? this.selectOptions.length : 0;
     const query = (this.component.dataSrc === 'url') ? {} : {
       limit: limit,
       skip: skip
@@ -407,22 +408,25 @@ export default class SelectComponent extends BaseComponent {
 
     // Add filter capability
     if (this.component.filter) {
-      url += `&${this.interpolate(this.component.filter)}`;
+      url += (!url.includes('?') ? '?' : '&') + this.interpolate(this.component.filter);
     }
 
     // Make the request.
     options.header = headers;
     this.loading = true;
+
     Formio.makeRequest(this.options.formio, 'select', url, method, body, options)
       .then((response) => {
-        const scrollTop = !this.scrollLoading && (this.currentItems.length === 0);
+        this.loading = false;
         this.setItems(response, !!search);
-        if (scrollTop) {
-          this.choices.choiceList.scrollToTop();
-        }
       })
       .catch((err) => {
-        this.stopInfiniteScroll();
+        if (this.isInfiniteScrollProvided) {
+          this.setItems([]);
+          this.disableInfiniteScroll();
+        }
+
+        this.isScrollLoading = false;
         this.loading = false;
         this.itemsLoadedResolve();
         this.emit('componentError', {
@@ -438,7 +442,7 @@ export default class SelectComponent extends BaseComponent {
    */
   get requestHeaders() {
     // Create the headers object.
-    const headers = new Headers();
+    const headers = new Formio.Headers();
 
     // Add custom headers to the url.
     if (this.component.data && this.component.data.headers) {
@@ -467,6 +471,44 @@ export default class SelectComponent extends BaseComponent {
     this.setItems(this.getCustomItems() || []);
   }
 
+  get additionalResourcesAvailable() {
+    return _.isNil(this.serverCount) || (this.serverCount > this.downloadedResources.length);
+  }
+
+  get serverCount() {
+    if (this.isFromSearch) {
+      return this.searchServerCount;
+    }
+
+    return this.defaultServerCount;
+  }
+
+  set serverCount(value) {
+    if (this.isFromSearch) {
+      this.searchServerCount = value;
+    }
+    else {
+      this.defaultServerCount = value;
+    }
+  }
+
+  get downloadedResources() {
+    if (this.isFromSearch) {
+      return this.searchDownloadedResources;
+    }
+
+    return this.defaultDownloadedResources;
+  }
+
+  set downloadedResources(value) {
+    if (this.isFromSearch) {
+      this.searchDownloadedResources = value;
+    }
+    else {
+      this.defaultDownloadedResources = value;
+    }
+  }
+
   /* eslint-disable max-statements */
   updateItems(searchInput, forceUpdate) {
     if (!this.component.data) {
@@ -483,7 +525,7 @@ export default class SelectComponent extends BaseComponent {
 
     switch (this.component.dataSrc) {
       case 'values':
-        this.component.valueProperty = 'value';
+        this.component.valueProperty = this.originalComponent.valueProperty = 'value';
         this.setItems(this.component.data.values);
         break;
       case 'json':
@@ -500,12 +542,18 @@ export default class SelectComponent extends BaseComponent {
         let resourceUrl = this.options.formio ? this.options.formio.formsUrl : `${Formio.getProjectUrl()}/form`;
         resourceUrl += (`/${this.component.data.resource}/submission`);
 
-        try {
-          this.loadItems(resourceUrl, searchInput, this.requestHeaders);
+        if (this.additionalResourcesAvailable) {
+          try {
+            this.loadItems(resourceUrl, searchInput, this.requestHeaders);
+          }
+          catch (err) {
+            console.warn(`Unable to load resources for ${this.key}`);
+          }
         }
-        catch (err) {
-          console.warn(`Unable to load resources for ${this.key}`);
+        else {
+          this.setItems(this.downloadedResources);
         }
+
         break;
       }
       case 'url': {
@@ -613,8 +661,8 @@ export default class SelectComponent extends BaseComponent {
       }
     }
 
+    const searchField = this.component.searchField;
     const choicesOptions = {
-      ...customOptions,
       removeItemButton: this.component.disabled ? false : _.get(this.component, 'removeItemButton', true),
       itemSelectText: '',
       classNames: {
@@ -630,13 +678,16 @@ export default class SelectComponent extends BaseComponent {
       shouldSort: false,
       position: (this.component.dropdown || 'auto'),
       searchEnabled: useSearch,
-      searchChoices: !this.component.searchField,
-      searchFields: _.get(this, 'component.searchFields', ['label']),
+      searchChoices: !searchField,
+      searchFields: this.component.searchFields
+        || (searchField ? [`value.${searchField}`] : ['label']),
       fuseOptions: Object.assign({
         include: 'score',
         threshold: _.get(this, 'component.searchThreshold', 0.3),
       }, _.get(this, 'component.fuseOptions', {})),
-      itemComparer: _.isEqual
+      itemComparer: _.isEqual,
+      resetScrollPosition: false,
+      ...customOptions,
     };
 
     const tabIndex = input.tabIndex;
@@ -655,18 +706,25 @@ export default class SelectComponent extends BaseComponent {
       }
     }
 
-    this.scrollList = this.choices.choiceList.element;
-    this.onScroll = () => {
-      if (
-        !this.scrollLoading &&
-        ((this.scrollList.scrollTop + this.scrollList.clientHeight) >= this.scrollList.scrollHeight)
-      ) {
-        this.scrollTop = this.scrollList.scrollTop;
-        this.scrollLoading = true;
-        this.triggerUpdate(this.choices.input.element.value);
-      }
-    };
-    this.scrollList.addEventListener('scroll', this.onScroll);
+    if (this.isInfiniteScrollProvided) {
+      this.scrollList = this.choices.choiceList.element;
+      this.onScroll = () => {
+        const isLoadingAvailable = !this.isScrollLoading
+          && this.additionalResourcesAvailable
+          && ((this.scrollList.scrollTop + this.scrollList.clientHeight) >= this.scrollList.scrollHeight);
+
+        if (isLoadingAvailable) {
+          this.isScrollLoading = true;
+          this.choices.setChoices([{
+            value: `${this.id}-loading`,
+            label: 'Loading...',
+            disabled: true,
+          }], 'value', 'label');
+          this.triggerUpdate(this.choices.input.element.value);
+        }
+      };
+      this.scrollList.addEventListener('scroll', this.onScroll);
+    }
 
     this.addFocusBlurEvents(this.focusableElement);
     this.focusableElement.setAttribute('tabIndex', tabIndex);
@@ -678,8 +736,14 @@ export default class SelectComponent extends BaseComponent {
       // Make sure to clear the search when no value is provided.
       if (this.choices && this.choices.input && this.choices.input.element) {
         this.addEventListener(this.choices.input.element, 'input', (event) => {
+          this.isFromSearch = !!event.target.value;
+
           if (!event.target.value) {
             this.triggerUpdate();
+          }
+          else {
+            this.serverCount = null;
+            this.downloadedResources = [];
           }
         });
       }
@@ -697,7 +761,15 @@ export default class SelectComponent extends BaseComponent {
       this.addEventListener(input, 'removeItem', () => {
         const items = this.choices._store.activeItems;
         if (!items.length) {
-          this.choices._addItem(placeholderValue, placeholderValue, 0, -1, null, true, null);
+          this.choices._addItem({
+            value: placeholderValue,
+            label: placeholderValue,
+            choiceId: 0,
+            groupId: -1,
+            customProperties: null,
+            placeholder: true,
+            keyCode: null,
+          });
         }
       });
     }
@@ -710,6 +782,14 @@ export default class SelectComponent extends BaseComponent {
     // Force the disabled state with getters and setters.
     this.disabled = this.disabled;
     this.triggerUpdate();
+  }
+
+  restoreValue() {
+    super.restoreValue();
+
+    if (this.choices) {
+      this.choices.setChoiceByValue(this.dataValue);
+    }
   }
 
   /* eslint-enable max-statements */
@@ -754,9 +834,17 @@ export default class SelectComponent extends BaseComponent {
    * @param {*} value
    * @param {Array} items
    */
-  addCurrentChoices(value, items) {
-    if (value) {
+  addCurrentChoices(values, items, keyValue) {
+    if (!values) {
+      return false;
+    }
+    const notFoundValuesToAdd = [];
+    const added = values.reduce((defaultAdded, value) => {
+      if (!value) {
+        return defaultAdded;
+      }
       let found = false;
+
       // Make sure that `items` and `this.selectOptions` points
       // to the same reference. Because `this.selectOptions` is
       // internal property and all items are populated by
@@ -770,26 +858,34 @@ export default class SelectComponent extends BaseComponent {
             found = true;
             return false;
           }
-          found |= _.isEqual(this.itemValue(choice, isSelectOptions), value);
+          const itemValue = keyValue ? choice.value : this.itemValue(choice, isSelectOptions);
+          found |= _.isEqual(itemValue, value);
           return found ? false : true;
         });
       }
 
       // Add the default option if no item is found.
       if (!found) {
-        if (this.choices) {
-          this.choices.setChoices([{
-            value: this.itemValue(value),
-            label: this.itemTemplate(value)
-          }], 'value', 'label', true);
-        }
-        else {
-          this.addOption(this.itemValue(value), this.itemTemplate(value));
-        }
+        notFoundValuesToAdd.push({
+          value: this.itemValue(value),
+          label: this.itemTemplate(value)
+        });
         return true;
       }
+      return found || defaultAdded;
+    }, false);
+
+    if (notFoundValuesToAdd.length) {
+      if (this.choices) {
+        this.choices.setChoices(notFoundValuesToAdd, 'value', 'label');
+      }
+      else {
+        notFoundValuesToAdd.map(notFoundValue => {
+          this.addOption(notFoundValue.value, notFoundValue.label);
+        });
+      }
     }
-    return false;
+    return added;
   }
 
   getView(data) {
@@ -812,7 +908,7 @@ export default class SelectComponent extends BaseComponent {
         this.component.placeholder &&
         (value === this.t(this.component.placeholder))
       ) {
-        value = '';
+        value = this.emptyValue;
       }
     }
     else {
@@ -826,7 +922,7 @@ export default class SelectComponent extends BaseComponent {
     }
     // Choices will return undefined if nothing is selected. We really want '' to be empty.
     if (value === undefined || value === null) {
-      value = '';
+      value = this.emptyValue;
     }
     return value;
   }
@@ -876,10 +972,10 @@ export default class SelectComponent extends BaseComponent {
         this.choices.removeActiveItems();
         // Add the currently selected choices if they don't already exist.
         const currentChoices = Array.isArray(this.dataValue) ? this.dataValue : [this.dataValue];
-        _.each(currentChoices, (choice) => {
-          this.addCurrentChoices(choice, this.selectOptions);
-        });
-        this.choices.setChoices(this.selectOptions, 'value', 'label', true).setChoiceByValue(value);
+        if (!this.addCurrentChoices(currentChoices, this.selectOptions, true)) {
+          this.choices.setChoices(this.selectOptions, 'value', 'label', true);
+        }
+        this.choices.setChoiceByValue(value);
       }
       else if (hasPreviousValue) {
         this.choices.removeActiveItems();

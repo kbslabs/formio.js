@@ -58,7 +58,7 @@ export default class SignatureComponent extends BaseComponent {
 
   setValue(value, flags) {
     flags = this.getFlags.apply(this, arguments);
-    super.setValue(value, flags);
+    const changed = super.setValue(value, flags);
     if (this.signaturePad) {
       if (value && !flags.noSign) {
         this.signatureImage.setAttribute('src', value);
@@ -68,6 +68,7 @@ export default class SignatureComponent extends BaseComponent {
         this.signaturePad.clear();
       }
     }
+    return changed;
   }
 
   showCanvas(show) {
@@ -206,6 +207,10 @@ export default class SignatureComponent extends BaseComponent {
     // disable the signature pad if the form in ViewOnly mode
     if (this.shouldDisable || this.viewOnly) {
       this.disabled = true;
+
+      // In view mode, ensure the padBody background color is set
+      // in case the source image is a different aspect ratio
+      this.padBody.style.backgroundColor = this.component.backgroundColor;
     }
 
     this.autofocus();

@@ -1,3 +1,7 @@
+// Keep lodash off the global scope.
+import _ from 'lodash';
+_.noConflict();
+
 /*global Formio*/
 const scripts = document.getElementsByTagName('script');
 let thisScript = null;
@@ -20,6 +24,12 @@ if (thisScript) {
     query[item.split('=')[0]] = item.split('=')[1] && decodeURIComponent(item.split('=')[1]);
   });
   query.styles = query.styles || (`${scriptSrc}/formio.full.min.css`);
+  if (query.base) {
+    Formio.setBaseUrl(query.base);
+  }
+  if (query.project) {
+    Formio.setProjectUrl(query.project);
+  }
   Form.embed(query).then((instance) => {
     Formio.events.emit('formEmbedded', instance);
     instance.on('submit', (submission) => {

@@ -4,6 +4,586 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 3.25.3
+### Fixed
+ - Problems with the templates from throwing "Strict mode code may not include a with statement"
+
+## 3.25.2
+### Fixed
+ - Issue with submit button not disabling when disableOnInvalid is set.
+
+## 3.25.1
+### Fixed
+ - The build script to make the templates usable in other frameworks (like angular).
+ - The default template for EditGrid to not show undefined in headers.
+
+## 3.25.0
+### Added
+ - A way to turn off eval by setting "FormioUtils.Evaluator.noeval = true".
+ 
+### Changed
+ - Default EditGrid templates to look better and also respect "tableView" property.
+
+## 3.24.4
+### Fixed
+ - Issues with TextArea getting into an infinite update loop.
+ - Select component infinite scroll fix
+ - Problem where Checkbox was not checking if input was set in updateValue method.
+ - Potential problems where changed status was not getting returned in setValue for some components.
+ 
+### Added
+ - Add silent:true option on submission errors to fail silently
+
+### Changed
+ - Upgrade i18next@17.0.11, core-js@3.2.1, fast-json-patch@2.2.1, sinon@7.4.1, webpack@4.39.1
+
+## 3.24.3
+### Fixed
+ - Performance issues with the auto-expanding TextArea components.
+
+## 3.24.2
+### Fixed
+ - FOR-2459: Fix competing scroll behavior between body and modals
+
+### Added
+ - Interpolation for the attribute values of html component.
+
+## 3.24.1
+### Fixed
+ - Changed all CDN references to point to https://cdn.form.io to control the uptime.
+
+## 3.24.0
+### Added
+ - Option to show EditGrid forms as modals.
+ - Make form config available to eval context. 
+ - Pass component to beforeSubmit hook
+ - Adding a custom wizard example to the docs and added showSubmit flag.
+
+### Changed
+ - Upgraded vanilla-picker@2.9.2, webpack@4.38.0
+
+### Fixed
+ - Add _.noConflict() to build scripts to prevent lodash leaking on global scope.
+ - Check for existence of this.formio before invoking to resolve some PDF form crashes.
+ - Fixed issues with subform submissions during nextPage to keep it from evaluating all nested forms on beforeNext.
+
+## 3.23.3
+### Changed
+ - Upgraded lodash@4.17.15, vanilla-picker@2.9.1, @babel/cli@7.5.5, @babel/core@7.5.5, @babel/plugin-proposal-class-properties@7.5.5, @babel/preset-env@7.5.5, mocha@6.2.0
+
+### Fixed
+ - FOR-2451: Fixed problem with PDF rendering and all hidden subforms not resolving correctly.
+ - Problems with npm scripts not executable with other OS platforms.
+
+### Added
+ - FOR-2443: Added the button component to the button emit events.
+
+## 3.23.2
+### Changed
+ - Upgraded flatpickr@4.6.2, @babel/core@7.5.4, @babel/preset-env@7.5.4, @babel/plugin-proposal-export-default-from@7.5.2, karma@4.2.0, webpack@4.36.1
+
+### Fixed
+ - FOR-2436: Sketchpad -> Fixed drawing continuing after mouse is un-clicked outside of canvas
+ - FOR-2283: Fixed validations on TextArea and TextField by trimming strings before setting them.
+ - Problem with Infinite loop issues by checking previous values as empty when determining changes.
+ - Issue where HTML5 widget with Select dropdowns would throw an error with the honeypot input.
+
+### Added
+ - FOR-2430: Sketchpad -> Ability to set default editor settings (stroke & fill colors, line width, circle size)
+
+## 3.23.1
+### Fixed
+ - Fixed usage of destroyed editor on setting value. Fixes WYSIWYG ClearOnHide issues.
+ - Fixed radio component clear when hidden.
+ - FOR-2425: Fix component in datagrid stops working after setSubmission
+ - FOR-2372: Day component accepts decimal values
+ - FOR-2432: Fixed issue where checkbox on viewAsHTML was crashing.
+
+## 3.23.0
+### Fixed
+ - FOR-2388: Fixed problems where the password would not have protected set by default.
+ - FOR-2346: Fixed the submission grid view for file compoennts.
+ - Problem with the Sketchpad dimensions being slightly off when zooming.
+ - DataMap: cursor jumping when entering value in ng-formio 3.x
+ - Updated @babel/cli@7.5.0, @babel/core@7.5.0, @babel/plugin-proposal-class-properties@7.5.0, @babel/preset-env@7.5.0, del@5.0.0, eslint@6.0.1, gulp-eslint@6.0.0, moment-timezone@0.5.26, marked@0.7.0
+
+### Added
+ - Ability to provide HTML attributes for components inputs
+
+## 3.22.15
+### Changed
+ - FOR-2415: Set file component to image mode by default when added via PDF builder
+ - FOR-2416: Increase default size of file component PDF overlay
+ - FOR-2417: Fix CSS rule for white-space:pre-wrap
+ - Upgraded i18next@17.0.6, webpack@4.35.2, vanilla-picker@2.9.0, marked@0.6.3
+
+### Fixed
+ - Fix bugs with day component
+ - FOR-2379: Update CKE to 12.2.0-formio.2, enable image support
+
+## 3.22.14
+### Changed
+ - Reverted https://github.com/formio/formio.js/pull/1428 because it was causing issues with TextArea wysiwyg with default submissions showing up.
+
+## 3.22.13
+### Fixed
+ - Problem with TextArea lazy-loaded editors where there was a race condition that would present when the value is set before the editor was ready.
+ - Make PDF submit component detection less restrictive; schema sometimes lacks the 'action' property
+
+## 3.22.12
+### Fixed
+ - Problems with the content-type header getting set incorrectly which was causing request failures.
+
+## 3.22.11
+### Fixed 
+ - FOR-2409: Sketchpad and Tagpad images not loading
+ - ```Content-type``` and ```Accept``` headers being added to non-formio requests
+
+## 3.22.10
+### Fixed
+ - FOR-2365: Allow override preventing Number component from being calculated
+ - FOR-2375: Add a submit button on forms that are initially created via PDF builder
+ - Fixed textarea does not set isDirty flag.
+ - FOR-2352: Force PDF.setForm to push supplied form to iframe
+ - Radio clear on hide fix
+ - FOR-2377: Fix signature aspect ratio issue
+ 
+### Added
+ - Make tooltips translatable.
+
+## 3.22.9
+### Added
+ - FOR-2329: Added vertical auto expanding to textarea component.
+
+### Fixed
+ - Fixed dropdown giving undefined on clear selection.
+ - Fixed loading dropdown value from resource.
+
+## 3.22.8
+### Added
+ - A way to set the "project" and "base" within the formio.embed.js file.
+
+## 3.22.7
+### Changed
+ - Upgraded core-js@3.1.4, i18next@17.0.4, babel-eslint@10.0.2
+
+### Fixed
+ - ```saveSubmission``` method not adding Content-Type header if headers are manually passed
+ - CKEditor settings (```this.component.wysiwyg```) being ignored if ```toolbar``` field is absent
+ - FOR-2378: Fix issue with drop events not firing
+
+### Added
+ - FOR-2357: Adding the file component to the PDF builder.
+ - Missing default label for the Well component.
+
+## 3.22.6
+### Fixed
+ - Problem where the wysiwyg settings would get reset when hidden.
+ - Issues where infinite onchange events would get triggered if a checkbox component was configured as Radio, but no Radio Key is provided.
+
+## 3.22.5
+### Fixed
+ - Date picker suffix icon for Bootstrap 4
+ - Problems with the PDF builder not allowing edit after the component has been added to the form.
+
+## 3.22.4
+### Changed
+ - Changed all "Promise" instances to use the "NativePromise" polyfill so that core-js would not include a Polyfill of Promise. This was causing issues with other frameworks (Angular) where they duck-punch the Promise library and throw errors when anything other than their wrappers are used (like what zone.js does).
+
+## 3.22.3
+### Changed
+ - Moved core-js as a dependency so that other libs dependent on core-js@2 can still build this module.
+ - Moved the CKEditor NumRows plugin to the formio/ckeditor5-build-classic repo.
+
+### Fixed
+ - FOR-2314: Re-fixed builder buttons missing after redraw + fixed Wizard building being broken
+
+## 3.22.2
+### Fixed
+ - Issues with the form builder not able to switch between wizard pages.
+
+## 3.22.1
+### Fixed
+ - Issues where the "rows" property was not working on CKEditor.
+
+### Added
+ - Ability to configure the wysiwyg settings for the CKEditor.
+
+## 3.22.0
+### Changed
+ - Upgraded to core-js@3
+ - Upgraded all dependencies.
+
+### Fixed
+ - Issue where reset for Day component was messing up the data.
+ - Sketchpad: Issues with resizing drawing area on beta portal and JS Fiddles
+ - FOR-2314: Builder buttons missing after redraw (for ex. when component has ```refreshOn: 'data'```)
+
+## 3.21.5
+### Fixed
+ - Issues with the CKEditor not working correctly.
+
+## 3.21.4
+### Fixed
+ - Issues with the PDF builder.
+ - Tagpad -> Form data not changing on dot selection, typing in inner tagpad components not working correctly (both reproduce in ng-formio)
+ - FOR-2313: Sketchpad -> Fixed color pickers not working on beta portal
+
+## 3.21.3
+### Fixed
+ - FOR-2309: Tagpad -> Fixed drawing area being rendered over builder buttons when no background image is specified
+ - FOR-2312: Tagpad -> Fixed drawing not working on mobile
+
+## 3.21.2
+### Fixed
+ - FOR-2319: Tagpad -> Fixed drawing area not being auto-resized on initial render when it's inside of Tabs component
+
+## 3.21.1
+### Fixed
+ - FOR-2310: Tagpad -> Fixed dot being drawn with offset when initial image has minX minY in viewBox
+
+## 3.21.0 
+### Added
+ - FOR-2290: Ability to specify file name template for File component
+
+### Fixed
+ - Reset values for DataGrid component.
+ - Tagpad: Layout (Columns, Panel etc.) components not rendering
+ - FOR-2079: Cursor jumping in WYSIWYGs when typing in ng-formio, added test
+ - Columns inner Column component having ```input: true``` inside of component JSON
+ - File uploads within the wizard forms.
+ - Fix adding new resource from within multiple-values select.
+ 
+### Changed
+ - Make it so that it will keep components from deleting if the component has a getComponents method.
+ - Upgraded i18next@15.1.3, @babel/core@7.4.5, @babel/preset-env@7.4.5, webpack@4.32.2
+
+## 3.20.17
+### Fixed
+ - Issue with the onChange for textarea's with wysiwyg enabled.
+ - Problems where the pristine flag would not get set correctly.
+
+## 3.20.16
+### Fixed
+ - Fix error where the modified flag was getting fired for wysiwyg editors.
+
+### Changed
+ - Clenaup Choices.selectFields functionality.
+
+### Added
+ - Add config for search in Resource components
+
+## 3.20.15
+### Fixed
+ - Issue where submission with form revisions enabled on "original" form setting was using wrong form.
+ - Problem where subform change events were not propagating change flags to the parent form change event.
+ - Sketchpad: Small gap at the bottom of view mode image
+ - Issue where the change event from a Nested form component was setting the form component as the source instead of the component that triggered the change within.
+
+### Added
+ - Tagpad: Automatic resizing of drawing area to fill half of available width
+
+## 3.20.14
+### Fixed
+ - Field logic infinite redraw issue with Select dropdowns.
+ - Problems where the Calendar widgets would not work when Field logic is enabled.
+
+## 3.20.13
+### Fixed
+ - Problem with subforms where the submission data could possibly reset.
+ - Problem with duplicate change events firing from the form components.
+
+## 3.20.12
+### Added
+ - FOR-2273: Sketchpad -> Automatic resizing of drawing area to fill all free space in modal 
+ - Min and Max validations to the DataGrid form builder interface.
+
+### Fixed
+ - Tagpad: Background being invisible in readOnly mode and overflowing its container
+ - When pasting a copied component into an empty layout component, it should paste the component inside the layout component instead of below it.
+ - Issues where the "Allow override of calculated value" would get in a bad state.
+ 
+### Changed
+ - Upgraded i18next@15.1.1, babel-loader@8.0.6
+
+## 3.20.11
+### Fixed
+ - FOR-2216: Add white-space:pre-wrap to native + ACE textareas in readonly/disabled/PDF mode
+ - Sketchpad: issue in Chrome with background image being displayed as text
+ - FOR-2239: Sketchpad -> Fixed issues with background being shifted in datagrid
+ - power-assert output not shown when running formio.js unit tests with karma
+ - Component.addClass() adds 'null' to class attribute
+
+### Added
+ - Add automatic contrib component registration
+
+## 3.20.10
+### Fixed
+ - FOR-2241: Fixed the missing false value for conditional logic.
+ - Issues where Field Logic would get in an infinite loop.
+ - FOR-2248: Resolved some memory leak problems when using builder.
+ - Fixing problems where the tabs and checkbox disappear when redraw is called on them.
+
+## 3.20.9
+### Fixed
+ - Fixed memory-leak where the global Formio.forms were not deleted when the form is destroyed.
+
+## 3.20.8
+### Added
+ - The user, form and access to the userPermissions check.
+
+## 3.20.7
+### Fixed
+ - The relay url on the SAML authentication to encode the full url.
+ - FOR-2221: Skip supplying `form` during FormioUtils.evaluate() unless we need it
+
+### Added
+ - A userPermissions method on Formio to check user permissions on forms and submissions.
+ 
+### Changed
+ - Refactored the "canSubmit" method to use the new userPermissions method.
+
+## 3.20.6
+### Fixed
+ - Fix touch events on sketchpad, tagpad
+ - Fix removing last dot from tagpad
+ - Fix checkbox label id in datagrids always referring to same item
+ - Add builder info to tagpad and sketchpad
+
+## 3.20.5
+### Fixed
+ - Only clone form in custom conditionals if needed as it is expensive.
+
+## 3.20.4
+### Added
+ - A way for the SAML SSO to force the authentication to always trigger against the SAML provider.
+ 
+### Changed
+ - Upgraded @babel/cli@7.4.4, @babel/core@7.4.4, @babel/polyfill@7.4.4, @babel/preset-env@7.4.4, del@4.1.1
+
+## 3.20.3
+### Fixed
+ - IE issues by adding a CustomEvent polyfill.
+ - Possible problems where a plugin could be registered more than once.
+
+### Changed
+ - Upgraded fetch-mock@7.3.3, i18next@15.1.0, gulp-clean-css@4.2.0
+
+## 3.20.2
+### Fixed
+ - Headers were not being passed properly to fetch requests due to change from whatwg-fetch to fetch-ponyfill.
+
+## 3.20.1
+### Fixed
+ - Problem where forms configured for "fontawesome" would not show the DateTime calendar icon on the field.
+
+## 3.20.0
+### Added
+ - Sketchpad: Ability to use dimensions from background SVG instead of providing ```component.width``` and ```component.height```
+ - Sketchpad: ```defaultZoom``` setting
+ - The value of the component to the evalContext so that it is available in all executed contexts.
+ - Include additional texts under translation - https://github.com/formio/formio.js/pull/1191
+ - Add sort & filter on resource component - https://github.com/formio/formio.js/pull/1188
+
+### Fixed
+ - Fixing Okta SSO get AccessToken error - https://github.com/formio/formio.js/pull/1193
+ - Added error message for beforeNext hook
+ - Adding some protections around scrollList references.
+
+## 3.20.0-beta.3
+### Fixed
+ - Problem where form builder would not fire any events when moving components.
+ - Fixing the form merging logic and also adding tests to ensure future functionality.
+ - Tagpad: sending excess headers on loading background image by URL 
+ - WYSIWYG image upload being broken after lazy load change
+ - Fixed auto adjusting columns when all components are not visible within.
+
+### Added
+ - A missing "return" in the show method of the TextArea component.
+ - Added validation for min & max cheched for selectboxes
+ - Extra protection to ensure all components get an auto-generated "key" if not provided when rendering/building.
+
+## 3.20.0-beta.2
+### Fixed
+ - Made it so that all input elements have an id.
+ - Fixing the builder styles for drag and drop.
+
+## 3.20.0-beta.1
+### Added
+ - Ability to edit JSON of component in builder
+ - Ability to show/hide specific buttons in builder
+ - Added a "beforeNext" hook that enables external controllers to hook into the wizard navigation.
+ - FOR-2168: Fixed problems with TextArea in multiple setting where value would not set when adding multiple values with Add Another button.
+ - Update Checkbox to add checkbox-checked class like Radio adds radio-selected class (https://github.com/formio/formio.js/pull/1136)
+
+### Fixed
+ - Issue in builder where if you have an HTML Elememnt and configure it with no content, you can no longer see that component in the builder.
+ - Problem with the TextArea character counter that would get off when in WYWIWYG mode.
+ - Changed function passed into to current page object
+
+### Changed
+ - Upgraded jquery@3.4.0, choices.js@7.0.0, marked@0.6.2
+ - Update Text field component to link Label ("for" attribute) with input's id
+
+## 3.19.8
+### Fixed
+ - Textareas were sometimes unsetting themselves on data change.
+ - Sketchpad: sending excess headers on loading background image by URL 
+
+## 3.19.7
+### Fixed
+ - Added form id to radio names so they are unique with multiple of the same form on a page.
+ - Textarea without wysiwyg crashed on set value after lazy load changes.
+
+## 3.19.6
+### Fixed
+ - Problem where the wysiwyg editors would show up on a readOnly form and pdf.
+
+### Added
+ - Lazy load wysiwyg editors for text area components.
+
+## 3.19.5
+### Fixed
+ - FOR-2074: Tagpad fixes: outer tabs, validation, inner layout components
+
+## 3.19.4
+### Added
+ - FOR-2074: Ability to specify background image URL instead of SVG markup for Tagpad
+ - FOR-2073: Ability to specify background image URL instead of SVG markup for Sketchpad
+
+### Fixed
+ - FOR-2074: Tagpad issues with layout components
+ - FOR-2074: Tagpad issues with validation check when there is no selected dot
+ - FOR-2074: Tagpad issue with missing dots when component is re-created
+
+## 3.19.3
+### Fixed
+ - Problem where the nested sub form was not sending the correct submission to load in subforms.
+
+## 3.19.2
+### Fixed
+ - Problems where subforms are not returning change events when they should be.
+
+## 3.19.0, 3.19.1
+### Fixed
+ - Ensure that the wysiwyg triggers updates with modified flag.
+ - Fixing the wysiwyg editor to not fire change events on initialize.
+ - Fixing the default height for ckeditor for rows configuration.
+ - Fixing the subform loading/saving to only use the 'reference' variable for consistency. Had to remove the "submit" component flag and replaced it with "reference"
+
+### Added
+ - Adding a way to disable the cache globally using "Formio.ignoreCache = true"
+
+## 3.18.4
+### Fixed
+ - FOR-2074: Tagpad issues when no value is specified
+ - FOR-2074: Added validation for Tagpad
+ - FOR-2183: Pass along the hide/show options to nested forms.
+ - FOR-2168: Fixed add andother button in TextArea component
+ - Github-issue-1045: Fixed resource component render with HTML5 widget
+ - Fix layout components crashing when moving in builder.
+ 
+### Changed
+ - Upgraded i18next@15.0.9, @babel/core@7.4.3, @babel/polyfill@7.4.3, @babel/preset-env@7.4.3, fast-json-patch@2.1.0, @babel/cli@7.4.3, del@4.1.0
+
+## 3.18.3
+### Fixed
+  - FOR-2168: Fixed add another button in textarea component.
+  - Github-issue-1045: Fixed resource component render with HTML5 widget
+
+## 3.18.2
+### Fixed
+ - FOR-2074: Tagpad error on submit when new dot is added and changed
+ - FOR-2074: Tagpad issues with background
+ - FOR-2073: Sketchpad issues with background
+ - FOR-2105: Fix validation on initial render in editgrid
+ - @zdegner: Select does not return value after scrolling to end of list of options 
+ 
+### Changed
+ - Upgraded i18next@15.0.8, hoek@6.1.3, sinon@7.3.1, eslint@5.16.0
+
+## 3.18.1
+### Fixed
+ - FOR-2158: Fixed lazyLoad issue with multiple select when viewing value
+ - FOR-2165: Fixed infinite loop with calculated value for select.
+
+## 3.18.0
+### Added
+ - Allow locking nested forms to specific revisions.
+ - Allowing for the auth url to be separated from the project url.
+ - FOR-2074: TagPad Component
+ - Bootstrap version option.
+ - FOR-2073: Sketchpad Component
+ 
+### Fixed
+ - FOR-2119: Fixed issues with multiple masks crashing during a form destroy.
+ - FOR-1956: Fix resetForm event on cancel button callback
+ - FOR-2105: Fix empty required select is valid onChange
+ - TextArea on non string value.
+ 
+### Changed
+ - Upgrade eslint@5.15.3, @babel/core@7.4.0, @babel/polyfill@7.4.0, @babel/preset-env@7.4.2, sinon@7.3.0
+
+## 3.17.4
+### Changed
+ - Minor tweaks to functionality added in 3.17.3
+
+## 3.17.3
+### Added
+ - Ability to view empty file information with flatten
+
+## 3.17.2
+### Added
+ - Options to indicate bootstrap version manually.
+
+### Fixed
+ - Case with TextArea, when value is not string or JSON object.
+
+## 3.17.1
+### Added
+ - Tagpad component to contrib.
+
+## 3.17.0
+### Added
+ - Sketchpad component to contrib.
+
+## 3.16.5
+### Fixed
+ - Problem in build mode where the collapsed lazy load panels would reset the panel.
+
+## 3.16.4
+### Fixed
+ - Edit forms for Base, Nested and Url components. 
+ - Allow custom select options to override any defined options.
+
+### Added
+ - The ability to configure a collapsed panel as a "lazyLoad" panel for performance improvements of long forms.
+
+### Changed
+ - Upgrade flatpickr@4.5.7, i18next@15.0.7, dialog-polyfill@0.5.0
+
+## 3.16.3
+### Fixed
+ - Non-incremental keys for layout components.
+ - Issue where custom Headers within Select component were not getting included anymore.
+ - Memory leaks within the Tabs and TextArea components with wysiwyg editors.
+
+## 3.16.2
+### Fixed
+ - Issue with the image upload via webcam where the image would not get set in the image list.
+ - Problem where 0 could not be set as the default value for Number components.
+ 
+### Changed
+ - Upgraded flatpickr@4.5.6, i18next@15.0.5, sinon@7.2.7, eslint@5.15.0, del@4.0.0
+
+## 3.16.1
+### Changed
+ - Upgraded choices.js@6.0.3, @babel/core@7.3.4, @babel/preset-env@7.3.4, fetch-mock@7.3.1, karma@4.0.1, mocha@6.0.2, sinon@7.2.5, webpack@4.29.6
+ - Now using a fetch ponyfill instead of the pervious whatwg-fetch polyfill for isomorphic behavior and encapsulation.
+
+### Fixed
+ - Issue with importing library with node.js and it would throw an error of "self" not defined.
+
 ## 3.16.0
 ### Changed
  - Improved validation for EditGrid with inline edit.

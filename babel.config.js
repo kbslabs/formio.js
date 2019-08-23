@@ -7,11 +7,14 @@ module.exports = {
           ie: '11',
         },
         useBuiltIns: 'usage',
+        corejs: 3
       },
     ],
   ],
   plugins: [
     '@babel/plugin-proposal-export-default-from',
     '@babel/plugin-proposal-optional-chaining',
+    '@babel/plugin-proposal-class-properties',
+    'babel-plugin-espower'
   ],
 };

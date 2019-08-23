@@ -55,8 +55,8 @@ export default class ContainerComponent extends NestedComponent {
     return {};
   }
 
-  hasChanged(before, after) {
-    return !_.isEqual(before, after);
+  hasChanged(newValue, oldValue) {
+    return !_.isEqual(newValue, oldValue);
   }
 
   getValue() {
@@ -71,7 +71,7 @@ export default class ContainerComponent extends NestedComponent {
   setValue(value, flags) {
     flags = this.getFlags.apply(this, arguments);
     if (!value || !_.isObject(value)) {
-      return;
+      return false;
     }
     const hasValue = this.hasValue();
     if (hasValue && _.isEmpty(this.dataValue)) {

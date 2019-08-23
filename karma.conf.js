@@ -7,17 +7,28 @@ module.exports = function(config) {
     webpack: {
       mode: 'development',
       module: {
+        // allows require with expression (aka "context") as used in power-assert
+        // (see https://github.com/power-assert-js/babel-plugin-espower/issues/14)
+        exprContextCritical: false,
         rules: [
           {
             test: /\.js$/,
             exclude: /node_modules/,
             use: {
               loader: 'babel-loader',
-              options: {
-                presets: ['@babel/env'],
-                plugins: ['@babel/plugin-proposal-export-default-from']
-              }
+              options: require('./babel.config.js')
             }
+          },
+          {
+            test: /\.ejs$/,
+            use: [{
+              loader: 'ejs-loader',
+              options: {
+                evaluate: /\{%([\s\S]+?)%\}/g,
+                interpolate: /\{\{([\s\S]+?)\}\}/g,
+                escape: /\{\{\{([\s\S]+?)\}\}\}/g
+              }
+            }]
           }
         ]
       }
