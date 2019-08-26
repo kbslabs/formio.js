@@ -62,7 +62,7 @@ export default class RadioComponent extends BaseComponent {
       if (this.options.row) {
         inputId += `-${this.options.row}`;
       }
-      inputId += `-${value.value}`;
+      inputId += `-${this.root.id}-${value.value}`;
       this.info.attr.id = inputId;
       this.info.attr.value = value.value;
       label.setAttribute('for', this.info.attr.id);
@@ -71,7 +71,7 @@ export default class RadioComponent extends BaseComponent {
       const input = this.ce('input');
       _.each(this.info.attr, (attrValue, key) => {
         if (key === 'name' && this.component.inputType === 'radio') {
-          attrValue += `[${this.id}]`;
+          attrValue += `[${this.root.id}]`;
         }
         input.setAttribute(key, attrValue);
       });
@@ -191,6 +191,11 @@ export default class RadioComponent extends BaseComponent {
       const inputValue = this.inputs[index].value;
       this.inputs[index].checked = (inputValue === value.toString());
     }
+  }
+
+  deleteValue() {
+    _.each(this.inputs, (__input, index) => this.setValueAt(index, false));
+    super.deleteValue();
   }
 
   updateValue(flags, value) {

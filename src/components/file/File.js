@@ -1,7 +1,9 @@
 import BaseComponent from '../base/Base';
 import { uniqueName } from '../../utils/utils';
 import download from 'downloadjs';
+import _ from 'lodash';
 import Formio from '../../Formio';
+import NativePromise from 'native-promise-only';
 
 // canvas.toBlob polyfill.
 if (!HTMLCanvasElement.prototype.toBlob) {
@@ -35,7 +37,9 @@ export default class FileComponent extends BaseComponent {
       filePattern: '*',
       fileMinSize: '0KB',
       fileMaxSize: '1GB',
-      uploadOnly: false
+      uploadOnly: false,
+      defaultOverlayWidth: 200,
+      defaultOverlayHeight: 200
     }, ...extend);
   }
 
@@ -54,7 +58,7 @@ export default class FileComponent extends BaseComponent {
     super(component, options, data);
 
     // Called when our files are ready.
-    this.filesReady = new Promise((resolve, reject) => {
+    this.filesReady = new NativePromise((resolve, reject) => {
       this.filesReadyResolve = resolve;
       this.filesReadyReject = reject;
     });
@@ -84,6 +88,10 @@ export default class FileComponent extends BaseComponent {
     return this.dataValue;
   }
 
+  getView(value) {
+    return value ? 'Yes' : 'No';
+  }
+
   loadImage(fileInfo) {
     return this.fileService.downloadFile(fileInfo).then(result => {
       return result.url;
@@ -92,6 +100,7 @@ export default class FileComponent extends BaseComponent {
 
   setValue(value) {
     const newValue = value || [];
+    const changed = this.hasChanged(newValue, this.dataValue);
     this.dataValue = newValue;
     if (this.component.image) {
       this.loadingImages = [];
@@ -102,7 +111,7 @@ export default class FileComponent extends BaseComponent {
         }
       });
       if (this.loadingImages.length) {
-        Promise.all(this.loadingImages)
+        NativePromise.all(this.loadingImages)
           .then(() => {
             this.refreshDOM();
             setTimeout(() => this.filesReadyResolve(), 100);
@@ -114,10 +123,22 @@ export default class FileComponent extends BaseComponent {
       this.refreshDOM();
       this.filesReadyResolve();
     }
+    return changed;
   }
 
   get defaultValue() {
     const value = super.defaultValue;
+    if (_.isEqual(value, []) && this.options.flatten) {
+      return [
+        {
+          storage: '',
+          name: '',
+          size: 0,
+          type: '',
+          originalName: '',
+        }
+      ];
+    }
     return Array.isArray(value) ? value : [];
   }
 
@@ -743,8 +764,9 @@ export default class FileComponent extends BaseComponent {
     }
     if (this.component.storage && files && files.length) {
       // files is not really an array and does not have a forEach method, so fake it.
+      /* eslint-disable max-statements */
       Array.prototype.forEach.call(files, file => {
-        const fileName = uniqueName(file.name);
+        const fileName = uniqueName(file.name, this.component.fileNameTemplate, this.evalContext());
         const fileUpload = {
           originalName: file.name,
           name: fileName,
@@ -783,6 +805,43 @@ export default class FileComponent extends BaseComponent {
         this.uploadStatusList.appendChild(uploadStatus);
 
         if (fileUpload.status !== 'error') {
+          // Track uploads in progress.
+          if (fileService.uploadsInProgress === undefined) {
+            const cssClass = 'uploads-in-progress';
+            const submitComponent = this.root.element
+                  .querySelector('.formio-component-submit');
+            var submitButton =
+                submitComponent ? submitComponent.querySelector('button') : null;
+            var array = new Array();
+            fileService.uploadsInProgress = {
+              array: array,
+              add: function(item) {
+                if (submitButton && cssClass && (array.length === 0)) {
+                  submitButton.classList.add(cssClass);
+                }
+                array.push(item);
+              },
+              remove: function(item) {
+                array.splice(array.indexOf(item), 1);
+                if (submitButton && cssClass && (array.length === 0)) {
+                  submitButton.classList.remove(cssClass);
+                }
+              },
+              report: function() {
+                const n = array.length;
+                var msg = `Uploads in progress: ${n}`;
+                if (n>0) {
+                  const keys = array.map(x => x.component.key);
+                  msg += ` (${keys.join(', ')})`;
+                }
+                console.log(msg);
+              }
+            };
+          }
+          const uploadsInProgress = fileService.uploadsInProgress;
+          uploadsInProgress.add(this);
+          //uploadsInProgress.report();
+          //
           if (this.component.privateDownload) {
             file.private = true;
           }
@@ -802,9 +861,16 @@ export default class FileComponent extends BaseComponent {
                 fileInfo.fileType = this.component.fileTypes[0].value;
               }
               fileInfo.originalName = file.name;
-              this.dataValue.push(fileInfo);
+              let files = this.dataValue;
+              if (!files || !Array.isArray(files)) {
+                files = [];
+              }
+              files.push(fileInfo);
               this.setValue(this.dataValue);
-              this.refreshDOM();
+              // Track uploads in progress.
+              uploadsInProgress.remove(this);
+              //uploadsInProgress.report();
+              //
               this.triggerChange();
             })
             .catch(response => {
@@ -817,6 +883,7 @@ export default class FileComponent extends BaseComponent {
             });
         }
       });
+      /* eslint-enable max-statements */
     }
   }
 

@@ -1,6 +1,6 @@
 /* globals Quill, ClassicEditor */
 import { conformToMask } from 'vanilla-text-mask';
-import Promise from 'native-promise-only';
+import NativePromise from 'native-promise-only';
 import _ from 'lodash';
 import Tooltip from 'tooltip.js';
 import * as FormioUtils from '../../utils/utils';
@@ -9,7 +9,7 @@ import Validator from '../Validator';
 import Widgets from '../../widgets';
 import Component from '../../Component';
 import dragula from 'dragula';
-const CKEDITOR = 'https://cdn.staticaly.com/gh/formio/ckeditor5-build-classic/master/build/ckeditor.js';
+const CKEDITOR = 'https://cdn.form.io/ckeditor/12.2.0/ckeditor.js';
 
 /**
  * This is the BaseComponent class which all elements within the FormioForm derive from.
@@ -179,7 +179,6 @@ export default class BaseComponent extends Component {
   /* eslint-disable max-statements */
   constructor(component, options, data) {
     super(options, (component && component.id) ? component.id : null);
-    this.originalComponent = _.cloneDeep(component);
 
     // Determine if we are inside a datagrid.
     this.inDataGrid = this.options.inDataGrid;
@@ -191,6 +190,11 @@ export default class BaseComponent extends Component {
      * @private
      */
     this._hasCondition = null;
+
+    /**
+     * A persistent data object that can persist between component instances.
+     */
+    this.persist = {};
 
     /**
      * The data object in which this component resides.
@@ -214,6 +218,9 @@ export default class BaseComponent extends Component {
 
     // Add the id to the component.
     this.component.id = this.id;
+
+    // Set the original component.
+    this.originalComponent = _.cloneDeep(this.component);
 
     /**
      * The bounding HTML Element which this component is rendered.
@@ -303,7 +310,7 @@ export default class BaseComponent extends Component {
      * The validators that are assigned to this component.
      * @type {[string]}
      */
-    this.validators = ['required', 'minLength', 'maxLength', 'custom', 'pattern', 'json', 'mask'];
+    this.validators = ['required', 'minLength', 'maxLength', 'minWords', 'maxWords', 'custom', 'pattern', 'json', 'mask'];
 
     /**
      * Used to trigger a new change in this component.
@@ -476,7 +483,7 @@ export default class BaseComponent extends Component {
    * @return {*}
    */
   beforeNext() {
-    return Promise.resolve(true);
+    return NativePromise.resolve(true);
   }
 
   /**
@@ -486,7 +493,7 @@ export default class BaseComponent extends Component {
    * @return {*}
    */
   beforeSubmit() {
-    return Promise.resolve(true);
+    return NativePromise.resolve(true);
   }
 
   /**
@@ -663,16 +670,18 @@ export default class BaseComponent extends Component {
       'aria-label': 'close'
     });
 
+    const modalBodyContainer = this.ce('div', {
+      class: 'formio-dialog-content'
+    }, [
+      modalBody,
+      closeDialog
+    ]);
+
     const dialog = this.ce('div', {
       class: 'formio-dialog formio-dialog-theme-default component-settings'
     }, [
       modalOverlay,
-      this.ce('div', {
-        class: 'formio-dialog-content'
-      }, [
-        modalBody,
-        closeDialog
-      ])
+      modalBodyContainer
     ]);
 
     this.addEventListener(modalOverlay, 'click', (event) => {
@@ -687,8 +696,11 @@ export default class BaseComponent extends Component {
       this.removeChildFrom(dialog, document.body);
     });
     document.body.appendChild(dialog);
+    document.body.classList.add('modal-open');
     dialog.body = modalBody;
+    dialog.bodyContainer = modalBodyContainer;
     dialog.close = () => {
+      document.body.classList.remove('modal-open');
       dialog.dispatchEvent(new CustomEvent('close'));
       this.removeChildFrom(dialog, document.body);
     };
@@ -801,6 +813,7 @@ export default class BaseComponent extends Component {
       instance: this,
       component: this.component,
       row: this.data,
+      value: ((this.key && this.hasValue()) ? this.dataValue : this.emptyValue),
       rowIndex: this.rowIndex,
       data: this.rootValue,
       submission: (this.root ? this.root._submission : {}),
@@ -906,7 +919,7 @@ export default class BaseComponent extends Component {
     const allowReorder = this.allowReorder;
     this.inputs = [];
     this.tbody.innerHTML = '';
-    values = values || this.dataValue;
+    values = (values && values.length > 0) ? values : this.dataValue;
     _.each(values, (value, index) => {
       const tr = this.ce('tr');
       if (allowReorder) {
@@ -1284,7 +1297,7 @@ export default class BaseComponent extends Component {
       trigger: 'hover click',
       placement: 'right',
       html: true,
-      title: this.interpolate(component.tooltip).replace(/(?:\r\n|\r|\n)/g, '<br />')
+      title: this.interpolate(this.t(component.tooltip)).replace(/(?:\r\n|\r|\n)/g, '<br />')
     });
   }
 
@@ -1394,6 +1407,7 @@ export default class BaseComponent extends Component {
    */
   createInput(container) {
     const input = this.ce(this.info.type, this.info.attr);
+
     this.setInputMask(input);
     input.widget = this.createWidget();
     const inputGroup = this.addInputGroup(input, container);
@@ -1442,6 +1456,11 @@ export default class BaseComponent extends Component {
       return null;
     }
 
+    // Pass along some options.
+    settings.icons = this.options.icons;
+    settings.i18n = this.options.i18n;
+    settings.language = this.options.language;
+
     // Create the widget.
     const widget = new Widgets[settings.type](settings, this.component);
     widget.on('update', () => this.updateValue(), true);
@@ -1450,9 +1469,10 @@ export default class BaseComponent extends Component {
     return widget;
   }
 
-  redraw() {
+  redraw(shouldRedrawInBuilder) {
     // Don't bother if we have not built yet.
-    if (!this.isBuilt) {
+    // Don't redraw if it's builder - because component would lose builder buttons
+    if (!this.isBuilt || (!shouldRedrawInBuilder && this.options.builder)) {
       return;
     }
     this.build(this.clear());
@@ -1461,7 +1481,7 @@ export default class BaseComponent extends Component {
   destroyInputs() {
     _.each(this.inputs, (input) => {
       input = this.performInputMapping(input);
-      if (input.mask) {
+      if (input.mask && input.mask.destroy) {
         input.mask.destroy();
       }
       if (input.widget) {
@@ -1479,7 +1499,7 @@ export default class BaseComponent extends Component {
    * Remove all event handlers.
    */
   destroy() {
-    const state = super.destroy() || {};
+    const state = super.destroy(...arguments) || {};
     this.destroyInputs();
     state.calculatedValue = this.calculatedValue;
     return state;
@@ -1503,7 +1523,7 @@ export default class BaseComponent extends Component {
   }
 
   renderTemplateToElement(element, template, data, actions = []) {
-    element.innerHTML = this.interpolate(template, data).trim();
+    element.innerHTML = this.interpolate(template, data);
     this.attachActions(element, actions);
     return element;
   }
@@ -1760,6 +1780,15 @@ export default class BaseComponent extends Component {
         element.style.visibility = 'visible';
         element.style.position = 'relative';
       }
+      else if (
+        this.parent &&
+        this.parent.parent &&
+        (this.parent.parent.component.type === 'columns') &&
+        this.parent.parent.component.autoAdjust
+      ) {
+        element.style.visibility = 'hidden';
+        element.style.position = 'relative';
+      }
       else {
         element.setAttribute('hidden', true);
         element.style.visibility = 'hidden';
@@ -1804,12 +1833,10 @@ export default class BaseComponent extends Component {
 
   onChange(flags, fromRoot) {
     flags = flags || {};
-    if (!flags.noValidate) {
-      this.pristine = false;
-    }
 
     if (flags.modified) {
       // Add a modified class if this element was manually modified.
+      this.pristine = false;
       this.addClass(this.getElement(), 'formio-modified');
     }
 
@@ -1943,11 +1970,12 @@ export default class BaseComponent extends Component {
   }
 
   addCKE(element, settings, onChange) {
-    settings = _.isEmpty(settings) ? null : settings;
+    settings = _.isEmpty(settings) ? {} : settings;
+    settings.base64Upload = true;
     return Formio.requireLibrary('ckeditor', 'ClassicEditor', CKEDITOR, true)
       .then(() => {
         if (!element.parentNode) {
-          return Promise.reject();
+          return NativePromise.reject();
         }
         return ClassicEditor.create(element, settings).then(editor => {
           editor.model.document.on('change', () => onChange(editor.data.get()));
@@ -1968,7 +1996,7 @@ export default class BaseComponent extends Component {
     return Formio.requireLibrary('quill', 'Quill', 'https://cdn.quilljs.com/1.3.6/quill.min.js', true)
       .then(() => {
         if (!element.parentNode) {
-          return Promise.reject();
+          return NativePromise.reject();
         }
         this.quill = new Quill(element, settings);
 
@@ -2140,18 +2168,18 @@ export default class BaseComponent extends Component {
   /**
    * Determine if the value of this component has changed.
    *
-   * @param before
-   * @param after
+   * @param newValue
+   * @param oldValue
    * @return {boolean}
    */
-  hasChanged(before, after) {
+  hasChanged(newValue, oldValue) {
     if (
-      ((before === undefined) || (before === null)) &&
-      ((after === undefined) || (after === null))
+      ((newValue === undefined) || (newValue === null)) &&
+      ((oldValue === undefined) || (oldValue === null) || this.isEmpty(oldValue))
     ) {
       return false;
     }
-    return !_.isEqual(before, after);
+    return !_.isEqual(newValue, oldValue);
   }
 
   /**
@@ -2258,7 +2286,7 @@ export default class BaseComponent extends Component {
 
     // Calculate the new value.
     const calculatedValue = this.evaluate(this.component.calculateValue, {
-      value: [],
+      value: this.defaultValue,
       data
     }, 'value');
 
@@ -2328,7 +2356,7 @@ export default class BaseComponent extends Component {
     }
 
     // No need to check for errors if there is no input or if it is pristine.
-    if (!this.hasInput || (!dirty && this.pristine)) {
+    if (!this.hasInput) {
       return '';
     }
 
@@ -2394,6 +2422,9 @@ export default class BaseComponent extends Component {
     if (this.errorElement && this.errorContainer) {
       this.errorElement.innerHTML = '';
       this.removeChildFrom(this.errorElement, this.errorContainer);
+    }
+    if ((!dirty && this.pristine)) {
+      message = '';
     }
     if (message) {
       this.error = {
@@ -2468,7 +2499,7 @@ export default class BaseComponent extends Component {
   }
 
   get dataReady() {
-    return Promise.resolve();
+    return NativePromise.resolve();
   }
 
   /**
@@ -2543,16 +2574,11 @@ export default class BaseComponent extends Component {
   }
 
   /**
-   * Disable this component.
+   * Force a component to be disabled regardless if it should or not.
    *
-   * @param {boolean} disabled
+   * @param disabled
    */
-  set disabled(disabled) {
-    // Do not allow a component to be disabled if it should be always...
-    if ((!disabled && this.shouldDisable) || (disabled && !this.shouldDisable)) {
-      return;
-    }
-
+  set forceDisabled(disabled) {
     this._disabled = disabled;
 
     // Add/remove the disabled class from the element.
@@ -2565,6 +2591,20 @@ export default class BaseComponent extends Component {
 
     // Disable all inputs.
     _.each(this.inputs, (input) => this.setDisabled(this.performInputMapping(input), disabled));
+  }
+
+  /**
+   * Disable this component.
+   *
+   * @param {boolean} disabled
+   */
+  set disabled(disabled) {
+    // Do not allow a component to be disabled if it should be always...
+    if ((!disabled && this.shouldDisable) || (disabled && !this.shouldDisable)) {
+      return;
+    }
+
+    this.forceDisabled = disabled;
   }
 
   setDisabled(element, disabled) {
@@ -2650,7 +2690,8 @@ export default class BaseComponent extends Component {
       name: this.options.name,
       type: this.component.inputType || 'text',
       class: 'form-control',
-      lang: this.options.language
+      lang: this.options.language,
+      id: this.key || this.id
     };
 
     if (this.component.placeholder) {
@@ -2660,6 +2701,7 @@ export default class BaseComponent extends Component {
     if (this.component.tabindex) {
       attributes.tabindex = this.component.tabindex;
     }
+    _.defaults(attributes, this.component.attributes);
 
     return {
       type: 'input',

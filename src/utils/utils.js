@@ -1,14 +1,18 @@
 /* global $ */
 
 import _ from 'lodash';
-import 'whatwg-fetch';
+import fetchPonyfill from 'fetch-ponyfill';
 import jsonLogic from 'json-logic-js';
 import moment from 'moment-timezone/moment-timezone';
 import jtz from 'jstimezonedetect';
 import { lodashOperators } from './jsonlogic/operators';
-import Promise from 'native-promise-only';
+import NativePromise from 'native-promise-only';
 import { getValue } from './formUtils';
-import stringHash from 'string-hash';
+import Evaluator from './Evaluator';
+const interpolate = Evaluator.interpolate;
+const { fetch } = fetchPonyfill({
+  Promise: NativePromise
+});
 
 export * from './formUtils';
 
@@ -39,13 +43,22 @@ export { jsonLogic, moment };
  * @param args
  * @return {*}
  */
+/* eslint-disable max-statements */
 export function evaluate(func, args, ret, tokenize) {
   let returnVal = null;
   args.component = args.component ? _.cloneDeep(args.component) : { key: 'unknown' };
   if (!args.form && args.instance) {
     args.form = _.get(args.instance, 'root._form', {});
   }
-  args.form = _.cloneDeep(args.form);
+
+  // Deeply cloning the form is expensive - only do it if it looks like the function needs it
+  if (func.toString().includes('form')) {
+    args.form = _.cloneDeep(args.form);
+  }
+  else {
+    delete args.form;
+  }
+
   const componentKey = args.component.key;
   if (typeof func === 'string') {
     if (ret) {
@@ -69,7 +82,7 @@ export function evaluate(func, args, ret, tokenize) {
     }
 
     try {
-      func = new Function(...params, func);
+      func = Evaluator.evaluator(func, ...params);
       args = _.values(args);
     }
     catch (err) {
@@ -101,6 +114,7 @@ export function evaluate(func, args, ret, tokenize) {
   }
   return returnVal;
 }
+/* eslint-enable max-statements */
 
 export function getRandomComponentId() {
   return `e${Math.random().toString(36).substring(7)}`;
@@ -325,7 +339,7 @@ export function setActionProperty(component, action, row, data, result, instance
       const textValue = action.property.component ? action[action.property.component] : action.text;
       const newValue = (instance && instance.interpolate) ?
         instance.interpolate(textValue, evalData) :
-        interpolate(textValue, evalData);
+        Evaluator.interpolate(textValue, evalData);
       if (newValue !== _.get(component, action.property.value, '')) {
         _.set(component, action.property.value, newValue);
       }
@@ -335,63 +349,33 @@ export function setActionProperty(component, action, row, data, result, instance
   return component;
 }
 
-const templateCache = {};
-const templateHashCache = {};
-
-function interpolateTemplate(template) {
-  const templateSettings = {
-    evaluate: /\{%([\s\S]+?)%\}/g,
-    interpolate: /\{\{([\s\S]+?)\}\}/g,
-    escape: /\{\{\{([\s\S]+?)\}\}\}/g
-  };
-  try {
-    return _.template(template, templateSettings);
-  }
-  catch (err) {
-    console.warn('Error while processing template', err, template);
-  }
-}
-
-export function addTemplateHash(template) {
-  const hash = stringHash(template);
-  templateHashCache[hash] = interpolateTemplate(template);
-  return hash;
-}
-
-/**
- * Interpolate a string and add data replacements.
- *
- * @param string
- * @param data
- * @returns {XML|string|*|void}
- */
-export function interpolate(rawTemplate, data) {
-  const template = _.isNumber(rawTemplate)
-    ? templateHashCache[rawTemplate]
-    : templateCache[rawTemplate] = templateCache[rawTemplate] || interpolateTemplate(rawTemplate);
-  if (typeof template === 'function') {
-    try {
-      return template(data);
-    }
-    catch (err) {
-      console.warn('Error interpolating template', err, rawTemplate, data);
-    }
-  }
-  return template;
-}
-
 /**
  * Make a filename guaranteed to be unique.
  * @param name
+ * @param template
+ * @param evalContext
  * @returns {string}
  */
-export function uniqueName(name) {
-  const parts = name.toLowerCase().replace(/[^0-9a-z.]/g, '').split('.');
-  const fileName = parts[0];
-  const ext = parts.length > 1
+export function uniqueName(name, template, evalContext) {
+  template = template || '{{fileName}}-{{guid}}';
+  //include guid in template anyway, to prevent overwriting issue if filename matches existing file
+  if (!template.includes('{{guid}}')) {
+    template = `${template}-{{guid}}`;
+  }
+  const parts = name.split('.');
+  let fileName = parts.slice(0, parts.length - 1).join('.');
+  const extension = parts.length > 1
     ? `.${_.last(parts)}`
     : '';
-  return `${fileName.substr(0, 10)}-${guid()}${ext}`;
+  //allow only 100 characters from original name to avoid issues with filename length restrictions
+  fileName = fileName.substr(0, 100);
+  evalContext = Object.assign(evalContext || {}, {
+    fileName,
+    guid: guid()
+  });
+  //only letters, numbers, dots, dashes, underscores and spaces are allowed. Anything else will be replaced with dash
+  const uniqueName = `${Evaluator.interpolate(template, evalContext)}${extension}`.replace(/[^0-9a-zA-Z.\-_ ]/g, '-');
+  return uniqueName;
 }
 
 export function guid() {
@@ -429,7 +413,7 @@ export function getDateSetting(date) {
 
   dateSetting = null;
   try {
-    const value = (new Function('moment', `return ${date};`))(moment);
+    const value = Evaluator.evaluator(`return ${date};`, 'moment')(moment);
     if (typeof value === 'string') {
       dateSetting = moment(value);
     }
@@ -524,7 +508,7 @@ export function shouldLoadZones(timezone) {
 export function loadZones(timezone) {
   if (timezone && !shouldLoadZones(timezone)) {
     // Return non-resolving promise.
-    return new Promise(_.noop);
+    return new NativePromise(_.noop);
   }
 
   if (moment.zonesPromise) {
@@ -929,7 +913,10 @@ export function uniqueKey(map, base) {
  *
  * @return {number}
  */
-export function bootstrapVersion() {
+export function bootstrapVersion(options) {
+  if (options.bootstrap) {
+    return options.bootstrap;
+  }
   if ((typeof $ === 'function') && (typeof $().collapse === 'function')) {
     return parseInt($.fn.collapse.Constructor.VERSION.split('.')[0], 10);
   }
@@ -1010,3 +997,5 @@ export function observeOverload(callback, options = {}) {
     }
   };
 }
+
+export { Evaluator, interpolate };

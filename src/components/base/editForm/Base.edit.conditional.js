@@ -15,8 +15,8 @@ export default [
         dataSrc: 'values',
         data: {
           values: [
-            { label: 'True', value: true },
-            { label: 'False', value: false }
+            { label: 'True', value: 'true' },
+            { label: 'False', value: 'false' }
           ]
         }
       },
@@ -28,16 +28,18 @@ export default [
         dataSrc: 'custom',
         valueProperty: 'value',
         data: {
-          custom: `
-            utils.eachComponent(instance.root.editForm.components, function(component, path) {
-              if (component.key !== data.key) {
+          custom(context) {
+            var values = [];
+            context.utils.eachComponent(context.instance.root.editForm.components, function(component) {
+              if (component.key !== context.data.key) {
                 values.push({
                   label: component.label || component.key,
                   value: component.key
                 });
               }
             });
-          `
+            return values;
+          }
         }
       },
       {

@@ -3,7 +3,7 @@ import moment from 'moment';
 import EventEmitter from './EventEmitter';
 import i18next from 'i18next';
 import Formio from './Formio';
-import Promise from 'native-promise-only';
+import NativePromise from 'native-promise-only';
 import Components from './components/Components';
 import NestedComponent from './components/nested/NestedComponent';
 import { currentTimezone } from './utils/utils';
@@ -186,7 +186,7 @@ export default class Webform extends NestedComponent {
      * });
      * form.src = 'https://examples.form.io/example';
      */
-    this.formReady = new Promise((resolve, reject) => {
+    this.formReady = new NativePromise((resolve, reject) => {
       /**
        * Called when the formReady state of this form has been resolved.
        *
@@ -214,7 +214,7 @@ export default class Webform extends NestedComponent {
      * });
      * form.src = 'https://examples.form.io/example/submission/234234234234234243';
      */
-    this.submissionReady = new Promise((resolve, reject) => {
+    this.submissionReady = new NativePromise((resolve, reject) => {
       /**
        * Called when the formReady state of this form has been resolved.
        *
@@ -235,7 +235,7 @@ export default class Webform extends NestedComponent {
      *
      * @type {Promise}
      */
-    this.onElement = new Promise((resolve) => {
+    this.onElement = new NativePromise((resolve) => {
       /**
        * Called when the element has been resolved.
        *
@@ -275,7 +275,7 @@ export default class Webform extends NestedComponent {
    * @return {Promise}
    */
   set language(lang) {
-    return new Promise((resolve, reject) => {
+    return new NativePromise((resolve, reject) => {
       this.options.language = lang;
       try {
         i18next.changeLanguage(lang, (err) => {
@@ -314,10 +314,10 @@ export default class Webform extends NestedComponent {
    */
   localize() {
     if (i18next.initialized) {
-      return Promise.resolve(i18next);
+      return NativePromise.resolve(i18next);
     }
     i18next.initialized = true;
-    return new Promise((resolve, reject) => {
+    return new NativePromise((resolve, reject) => {
       try {
         i18next.init(this.options.i18n, (err) => {
           // Get language but remove any ;q=1 that might exist on it.
@@ -332,6 +332,13 @@ export default class Webform extends NestedComponent {
         return reject(err);
       }
     });
+  }
+
+  destroy(preserveGlobal = false) {
+    if (!preserveGlobal) {
+      delete Formio.forms[this.id];
+    }
+    return super.destroy();
   }
 
   /**
@@ -722,6 +729,24 @@ export default class Webform extends NestedComponent {
   }
 
   /**
+   * Explicitely sets the submission value directly without waiting on any form loads etc.
+   *
+   * @param submission
+   * @return {*}
+   */
+  setSubmissionValue(submission, flags) {
+    this.submissionSet = true;
+    if (!this.setValue(submission, flags)) {
+      if (this.hasChanged(submission, this.getValue())) {
+        this.triggerChange({
+          noValidate: true
+        });
+      }
+    }
+    return this.dataReady.then(() => this.submissionReadyResolve(submission));
+  }
+
+  /**
    * Sets a submission and returns the promise when it is ready.
    * @param submission
    * @param flags
@@ -730,16 +755,24 @@ export default class Webform extends NestedComponent {
   setSubmission(submission, flags) {
     return this.onSubmission = this.formReady.then(
       () => {
-        // If nothing changed, still trigger an update.
         this.submissionSet = true;
-        if (!this.setValue(submission, flags)) {
-          if (this.hasChanged(submission, this.getValue())) {
-            this.triggerChange({
-              noValidate: true
+        if (
+          submission._fvid &&
+          this._form.revisions === 'original' &&
+          submission._fvid !== this._form._vid &&
+          this.formio
+        ) {
+          return this.formio.loadFormRevision(submission._fvid).then((revision) => {
+            this._form._vid = submission._fvid;
+            this._form.components = revision.components;
+            return this.setForm(this._form).then(() => {
+              return this.setSubmissionValue(submission, flags);
             });
-          }
+          });
         }
-        return this.dataReady.then(() => this.submissionReadyResolve(submission));
+        else {
+          return this.setSubmissionValue(submission, flags);
+        }
       },
       (err) => this.submissionReadyReject(err)
     ).catch(
@@ -946,7 +979,13 @@ export default class Webform extends NestedComponent {
    * Build the form.
    */
   build(state) {
-    this.on('submitButton', (options) => this.submit(false, options), true);
+    // Clear any existing event handlers in case this is a rebuild
+    this.eventHandlers.forEach(h => this.removeEventListener(h.obj, h.type));
+
+    this.on('submitButton', options => {
+      this.submit(false, options).catch(e => e !== false && console.log(e));
+    }, true);
+
     this.on('checkValidity', (data) => this.checkValidity(null, true, data), true);
     this.addComponents(null, null, null, state);
     this.currentForm = this;
@@ -1061,6 +1100,13 @@ export default class Webform extends NestedComponent {
 
     this.submitting = false;
     this.setPristine(false);
+
+    // Allow for silent cancellations (no error message, no submit button error state)
+    if (error && error.silent) {
+      this.emit('change', { isValid: true });
+      return false;
+    }
+
     return this.showErrors(error, true);
   }
 
@@ -1070,7 +1116,7 @@ export default class Webform extends NestedComponent {
    * @param changed
    * @param flags
    */
-  onChange(flags, changed) {
+  onChange(flags = {}, changed) {
     let isChangeEventEmitted = false;
     // For any change events, clear any custom errors for that component.
     if (changed && changed.component) {
@@ -1080,7 +1126,11 @@ export default class Webform extends NestedComponent {
     super.onChange(flags, true);
     const value = _.clone(this._submission);
     value.changed = changed;
-    value.isValid = this.checkData(value.data, flags, changed ? changed.instance : null);
+    flags.noValidate = !changed;
+    const isValid = this.checkData(value.data, flags, changed ? changed.instance : null);
+    if (changed) {
+      value.isValid = isValid;
+    }
     this.showElement(true);
     this.loading = false;
     if (this.submitted) {
@@ -1129,6 +1179,7 @@ export default class Webform extends NestedComponent {
    */
   cancel(noconfirm) {
     if (noconfirm || confirm('Are you sure you want to cancel?')) {
+      this.emit('resetForm');
       this.resetValue();
       return true;
     }
@@ -1138,7 +1189,7 @@ export default class Webform extends NestedComponent {
   }
 
   submitForm(options = {}) {
-    return new Promise((resolve, reject) => {
+    return new NativePromise((resolve, reject) => {
       // Read-only forms should never submit.
       if (this.options.readOnly) {
         return resolve({
@@ -1156,14 +1207,14 @@ export default class Webform extends NestedComponent {
         browserName: navigator.appName,
         userAgent: navigator.userAgent,
         pathName: window.location.pathname,
-        onLine: navigator.onLine,
+        onLine: navigator.onLine
       });
 
       const submission = _.cloneDeep(this.submission || {});
-
       submission.state = options.state || 'submitted';
+
       const isDraft = (submission.state === 'draft');
-      this.hook('beforeSubmit', submission, (err) => {
+      this.hook('beforeSubmit', { ...submission, component: options.component }, (err) => {
         if (err) {
           return reject(err);
         }
@@ -1183,7 +1234,7 @@ export default class Webform extends NestedComponent {
           }
         });
 
-        this.hook('customValidation', submission, (err) => {
+        this.hook('customValidation', { ...submission, component: options.component }, (err) => {
           if (err) {
             // If string is returned, cast to object.
             if (typeof err === 'string') {
@@ -1232,7 +1283,7 @@ export default class Webform extends NestedComponent {
     this.submitting = true;
     return this.submitForm(options)
       .then(({ submission, saved }) => this.onSubmit(submission, saved))
-      .catch((err) => Promise.reject(this.onSubmissionError(err)));
+      .catch((err) => NativePromise.reject(this.onSubmissionError(err)));
   }
 
   /**

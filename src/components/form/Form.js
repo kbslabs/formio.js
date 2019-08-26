@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import BaseComponent from '../base/Base';
 import EventEmitter from 'eventemitter2';
-import Promise from 'native-promise-only';
+import NativePromise from 'native-promise-only';
 import { isMongoId, eachComponent } from '../../utils/utils';
 import Formio from '../../Formio';
 import Form from '../../Form';
@@ -9,6 +9,7 @@ import Form from '../../Form';
 export default class FormComponent extends BaseComponent {
   static schema(...extend) {
     return BaseComponent.schema({
+      label: 'Form',
       type: 'form',
       key: 'form',
       src: '',
@@ -33,7 +34,7 @@ export default class FormComponent extends BaseComponent {
     super(component, options, data);
     this.subForm = null;
     this.formSrc = '';
-    this.subFormReady = new Promise((resolve, reject) => {
+    this.subFormReady = new NativePromise((resolve, reject) => {
       this.subFormReadyResolve = resolve;
       this.subFormReadyReject = reject;
     });
@@ -62,11 +63,11 @@ export default class FormComponent extends BaseComponent {
     return this._root;
   }
 
-  set nosubmit(value = false) {
-    this._nosubmit = value;
+  set nosubmit(value) {
+    this._nosubmit = !!value;
 
     if (this.subForm) {
-      this.subForm.nosubmit = value;
+      this.subForm.nosubmit = !!value;
     }
   }
 
@@ -135,10 +136,9 @@ export default class FormComponent extends BaseComponent {
       this.subForm.parent = this;
       this.subForm.parentVisible = this.visible;
       this.subForm.on('change', () => {
-        this.subForm.off('change');
-        this.subForm.on('change', () => {
-          this.dataValue = this.subForm.getValue();
-          this.triggerChange();
+        this.dataValue = this.subForm.getValue();
+        this.triggerChange({
+          noEmit: true
         });
       });
       this.subForm.url = this.formSrc;
@@ -151,8 +151,16 @@ export default class FormComponent extends BaseComponent {
 
   show(...args) {
     const state = super.show(...args);
-    if (state && !this.subFormLoaded) {
-      this.loadSubForm();
+
+    if (!this.subFormLoaded) {
+      if (state) {
+        this.loadSubForm();
+      }
+      // If our parent is read-only and is done loading, and we were never asked
+      // to load a subform, consider our subform loading promise resolved
+      else if (this.parent.options.readOnly && !this.parent.loading) {
+        this.subFormReadyResolve(this.subForm);
+      }
     }
 
     return state;
@@ -190,13 +198,14 @@ export default class FormComponent extends BaseComponent {
     if (this.options && this.options.viewAsHtml) {
       srcOptions.viewAsHtml = this.options.viewAsHtml;
     }
+    if (this.options && this.options.hide) {
+      srcOptions.hide = this.options.hide;
+    }
+    if (this.options && this.options.show) {
+      srcOptions.show = this.options.show;
+    }
     if (_.has(this.options, 'language')) {
       srcOptions.language = this.options.language;
-    }
-
-    // Make sure that if reference is provided, the form must submit.
-    if (this.component.reference) {
-      this.component.submit = true;
     }
 
     if (this.component.src) {
@@ -240,6 +249,11 @@ export default class FormComponent extends BaseComponent {
       if (this.component.form) {
         this.formSrc = `${rootSrc}/${this.component.form}`;
       }
+    }
+
+    // Add revision version if set.
+    if (this.component.formRevision || this.component.formRevision === 0) {
+      this.formSrc += `/v/${this.component.formRevision}`;
     }
 
     // Determine if we already have a loaded form object.
@@ -295,19 +309,23 @@ export default class FormComponent extends BaseComponent {
     }
   }
 
+  get shouldSubmit() {
+    return !this.isHidden() && (!this.component.hasOwnProperty('reference') || this.component.reference);
+  }
+
   /**
    * Submit the form before the next page is triggered.
    */
   beforeNext() {
     // If we wish to submit the form on next page, then do that here.
-    if (this.component.submit) {
+    if (this.shouldSubmit) {
       return this.loadSubForm().then(() => {
         return this.subForm.submitForm().then(result => {
           this.dataValue = result.submission;
           return this.dataValue;
         }).catch(err => {
           this.subForm.onSubmissionError(err);
-          return Promise.reject(err);
+          return NativePromise.reject(err);
         });
       });
     }
@@ -324,23 +342,23 @@ export default class FormComponent extends BaseComponent {
 
     // This submission has already been submitted, so just return the reference data.
     if (submission && submission._id && submission.form) {
-      this.dataValue = this.component.reference ? {
+      this.dataValue = this.shouldSubmit ? {
         _id: submission._id,
         form: submission.form
       } : submission;
-      return Promise.resolve(this.dataValue);
+      return NativePromise.resolve(this.dataValue);
     }
 
     // This submission has not been submitted yet.
-    if (this.component.submit) {
+    if (this.shouldSubmit) {
       return this.loadSubForm().then(() => {
         return this.subForm.submitForm()
           .then(result => {
             this.subForm.loading = false;
-            this.dataValue = this.component.reference ? {
+            this.dataValue = {
               _id: result.submission._id,
               form: result.submission.form
-            } : result.submission;
+            };
             return this.dataValue;
           })
           .catch(() => {});
@@ -369,30 +387,38 @@ export default class FormComponent extends BaseComponent {
     return !super.checkConditions(this.rootValue);
   }
 
-  setValue(submission, flags) {
-    const changed = super.setValue(submission, flags);
+  setValue(submission, flags, norecurse) {
+    this._submission = submission;
+    if (this.subForm || norecurse) {
+      if (
+        !norecurse &&
+        submission &&
+        submission._id &&
+        this.subForm.formio &&
+        !flags.noload &&
+        (_.isEmpty(submission.data) || this.shouldSubmit)
+      ) {
+        const submissionUrl = `${this.subForm.formio.formsUrl}/${submission.form}/submission/${submission._id}`;
+        this.subForm.setUrl(submissionUrl, this.options);
+        this.subForm.nosubmit = false;
+        this.subForm.loadSubmission().then((sub) => this.setValue(sub, flags, true));
+        return super.setValue(submission, flags);
+      }
+      else {
+        return this.subForm ? this.subForm.setValue(submission, flags) : super.setValue(submission, flags);
+      }
+    }
+
+    const changed = super.setValue(this._submission, flags);
     const hidden = this.isHidden();
     let subForm;
-
     if (hidden) {
       subForm = this.subFormReady;
     }
     else {
       subForm = this.loadSubForm();
     }
-
-    subForm.then((form) => {
-        if (submission && submission._id && form.formio && !flags.noload && _.isEmpty(submission.data)) {
-          const submissionUrl = `${form.formio.formsUrl}/${submission.form}/submission/${submission._id}`;
-          form.setUrl(submissionUrl, this.options);
-          form.nosubmit = false;
-          form.loadSubmission();
-        }
-        else {
-          form.setValue(submission, flags);
-        }
-      });
-
+    subForm.then(() => this.setValue(this._submission, flags, true));
     return changed;
   }
 

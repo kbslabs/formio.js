@@ -129,6 +129,12 @@ export default class TabsComponent extends NestedComponent {
       this.tabs.push(tabPanel);
     });
 
+    if (this.element) {
+      this.appendChild(this.element, [this.tabsBar, this.tabsContent]);
+      this.element.className = this.className;
+      return this.element;
+    }
+
     this.element = this.ce('div', {
       id: this.id,
       class: this.className,
@@ -158,17 +164,9 @@ export default class TabsComponent extends NestedComponent {
     // Get the current tab.
     const tab = this.component.components[index];
     this.empty(this.tabs[index]);
+    this.components.map((comp) => comp.destroy());
     this.components = [];
-    const components = this.hook('addComponents', tab.components, this);
-    components.forEach((component) => this.addComponent(
-      component,
-      this.tabs[index],
-      this.data,
-      null,
-      null,
-      state,
-    ));
-    this.restoreValue();
+
     if (this.tabLinks.length <= index) {
       return;
     }
@@ -182,6 +180,17 @@ export default class TabsComponent extends NestedComponent {
       .addClass(this.tabLinks[index].tabLink, 'active')
       .addClass(this.tabs[index], 'active');
 
+    const components = this.hook('addComponents', tab.components, this);
+    components.forEach((component) => this.addComponent(
+      component,
+      this.tabs[index],
+      this.data,
+      null,
+      null,
+      state,
+    ));
+
+    this.restoreValue();
     this.triggerChange();
   }
 
@@ -211,6 +220,10 @@ export default class TabsComponent extends NestedComponent {
    * @param dirty
    */
   checkValidity(data, dirty) {
+    if (!dirty) {
+      return super.checkValidity(data, dirty);
+    }
+
     if (!this.checkCondition(null, data)) {
       this.setCustomValidity('');
       return true;
@@ -223,7 +236,9 @@ export default class TabsComponent extends NestedComponent {
       tabComp.internal = true;
       const component = this.createComponent(tabComp);
       this.validityTabs.push(component);
-      return component.checkValidity(data, dirty) && check;
+      const valid = component.checkValidity(data, dirty) && check;
+      component.destroy();
+      return valid;
     }, isValid);
   }
 
