@@ -128,7 +128,8 @@ export default class ModalEditComponent extends TextAreaComponent {
     this.createInput(inner);
 
     if (this.isPlain) {
-      const textarea = container.querySelector('textarea');
+      //this is a patch for bad class naming on component creation: https://github.com/formio/formio.js/issues/1599
+      const textarea = this.options.readOnly ? container.querySelector('.well') : container.querySelector('textarea');
       textarea.style.minHeight = `${height}px`;
       textarea.style.borderRadius = 0;
       textarea.style.resize = 'vertical';
