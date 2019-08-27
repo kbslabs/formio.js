@@ -1,6 +1,6 @@
 {
   "name": "@kbs/formiojs",
-  "version": "3.25.3",
+  "version": "3.25.4",
   "description": "Common js library for client side interaction with <form.io>",
   "main": "index.js",
   "files": [
