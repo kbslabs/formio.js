@@ -51,6 +51,9 @@ describe('Rendering Tests', () => {
       });
 
       Object.keys(AllComponents).forEach(component => {
+        if (component === 'component') {
+          return;
+        }
         describe(`Component ${component}`, () => {
           it(`Renders ${component} for ${framework}`, (done) => {
             const instance = new AllComponents[component]({}, { template: framework });
